@@ -29,6 +29,16 @@
       "filename": "analytika_6.html",
       "url": "https://drozdanaradi.github.io/apps/analytika_6.html",
       "updated": "2026-03-30"
+    },
+    {
+      "id": 4,
+      "name": "Analytika výdejů zásob",
+      "description": "Detailní analýza prodejů ze systému Pohoda s přehledem obratu, zisku, marže, top artiklů, zákazníků a ABC klasifikace",
+      "icon": "bar-chart-2",
+      "colorIndex": 0,
+      "filename": "zasob-analytika_3.html",
+      "url": "https://drozdanaradi.github.io/apps/zasob-analytika_3.html",
+      "updated": "2026-03-30"
     }
   ]
 }
