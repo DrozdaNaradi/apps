@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytika zásob — Milwaukee Heavy Duty Center</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--red:#C8102E;--bg:#f0f2f5;--card:#fff;--border:#e2e5ea;--text:#0d1117;--text2:#5a6270;--text3:#9aa0ab;--green:#16a34a;--orange:#d97706;--blue:#2563eb;--purple:#7c3aed;--teal:#0891b2;--radius:14px;--sh:0 2px 12px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+/* TOPBAR */
+.topbar{background:#0d1117;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+.logo-text{color:#fff;font-size:15px;font-weight:700;letter-spacing:-.3px}
+.logo-sub{color:#6b7280;font-size:11px;margin-top:-1px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.reload-chip{padding:6px 14px;border-radius:8px;background:#1f2937;color:#9ca3af;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:.15s}
+.reload-chip:hover{background:#374151;color:#fff}
+/* UPLOAD */
+.upload-screen{min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;padding:40px}
+.upload-card{background:#fff;border-radius:20px;padding:48px;max-width:520px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.1)}
+.upload-card h2{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:8px}
+.upload-card p{color:var(--text2);font-size:14px;line-height:1.7;margin-bottom:28px}
+.drop-zone{border:2px dashed var(--border);border-radius:14px;padding:36px 20px;cursor:pointer;transition:.2s;background:#fafbfc;margin-bottom:16px}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--red);background:#fff8f8}
+.drop-btn{display:inline-block;margin-top:12px;padding:10px 22px;background:var(--red);color:#fff;border-radius:9px;font-size:13px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chip{background:#f0f2f5;border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text2)}
+/* DASH */
+.dash{padding:20px 24px;display:none}
+.ytabs-bar{display:none;margin-bottom:16px}
+.ytabs-bar-inner{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ytabs-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+.year-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.ytab{padding:6px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);border:1.5px solid var(--border);background:#fff;font-family:inherit;transition:.15s}
+.ytab.active{background:var(--red);color:#fff;border-color:var(--red)}
+.ytab:hover:not(.active){background:var(--bg)}
+.dash-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.dash-title{font-size:20px;font-weight:800;letter-spacing:-.4px}
+.dash-sub{font-size:12px;color:var(--text2);margin-top:3px}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.kpi{background:var(--card);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--sh);border:1px solid var(--border)}
+.kpi-icon{font-size:20px;margin-bottom:8px}
+.kpi-val{font-size:22px;font-weight:900;letter-spacing:-.7px;line-height:1.1;margin-bottom:3px}
+.kpi-lbl{font-size:11px;color:var(--text2);font-weight:600}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.kpi.red .kpi-val{color:var(--red)}.kpi.green .kpi-val{color:var(--green)}.kpi.blue .kpi-val{color:var(--blue)}.kpi.orange .kpi-val{color:var(--orange)}.kpi.purple .kpi-val{color:var(--purple)}.kpi.teal .kpi-val{color:var(--teal)}
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:16px}
+.mb16{margin-bottom:16px}
+@media(max-width:960px){.g2,.g3,.g21,.g12{grid-template-columns:1fr}}
+/* CARD */
+.card{background:var(--card);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--sh);border:1px solid var(--border)}
+.card-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-title small{font-size:11px;color:var(--text3);font-weight:400}
+.chart-box{position:relative;height:220px}
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:9px 10px;border-bottom:1px solid #f5f5f7;font-size:12px;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#fafbfc}
+.tbl .r{text-align:right;font-variant-numeric:tabular-nums}
+.tbl .bold{font-weight:700}.tbl .red{color:var(--red);font-weight:700}.tbl .green{color:var(--green);font-weight:700}.tbl .dim{color:var(--text2)}.tbl .teal{color:var(--teal);font-weight:700}
+.rn{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;background:#f0f2f5;color:var(--text2);flex-shrink:0}
+.rn1{background:#fef3c7;color:#92400e}.rn2{background:#f3f4f6;color:#374151}.rn3{background:#fde8c8;color:#9a3412}
+.bar-bg{height:5px;border-radius:99px;background:#f0f2f5;display:inline-block;width:70px;vertical-align:middle;overflow:hidden;margin-left:6px}
+.bar-fill{height:100%;border-radius:99px;background:var(--red)}
+.bf-g{background:var(--green)}.bf-b{background:var(--blue)}.bf-t{background:var(--teal)}.bf-o{background:var(--orange)}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
+.pill-red{background:#fee2e2;color:#b91c1c}.pill-green{background:#dcfce7;color:#15803d}.pill-orange{background:#fef3c7;color:#92400e}.pill-blue{background:#dbeafe;color:#1e40af}.pill-gray{background:#f3f4f6;color:#374151}.pill-teal{background:#cffafe;color:#0e7490}
+.trunc{max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+/* SEARCH */
+.search-input{width:100%;padding:9px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;outline:none;font-family:inherit;background:#fff;transition:.15s;margin-bottom:10px}
+.search-input:focus{border-color:var(--red)}
+.seg-btn{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--text2);font-family:inherit;transition:.15s}
+.seg-btn.active{color:#fff;border-color:transparent}
+.seg-btn:hover:not(.active){background:var(--bg)}
+/* TOAST */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:500;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);pointer-events:auto;animation:tin .2s ease}
+.t-info{background:#1a1a1a;color:#fff}.t-ok{background:#15803d;color:#fff}.t-err{background:#b91c1c;color:#fff}
+@keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 20 20"><path d="M3 4h14M3 8h14M3 12h8M3 16h5"/><circle cx="16" cy="14" r="3" fill="#fff"/></svg></div>
+    <div><div class="logo-text">Analytika výdejů zásob</div><div class="logo-sub">Raditona s.r.o. — Milwaukee Heavy Duty Center</div></div>
+  </div>
+  <div class="topbar-right">
+    <button class="reload-chip" onclick="document.getElementById('fi').click()">📂 Načíst soubor</button>
+  </div>
+</div>
+
+<div class="upload-screen" id="upload-screen">
+  <div class="upload-card">
+    <div style="font-size:44px;margin-bottom:16px">📦</div>
+    <h2>Analytika výdejů zásob</h2>
+    <p>Nahraj export výdejů z Pohody. Aplikace automaticky zparsuje artikly, zákazníky, obrat, zisk a marži — a ukáže ti kompletní přehled.</p>
+    <div class="drop-zone" id="dz" onclick="document.getElementById('fi').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="event.preventDefault();this.classList.remove('drag');handleFile(event.dataTransfer.files[0])">
+      <div style="font-size:36px;margin-bottom:8px">📂</div>
+      <div style="font-size:15px;font-weight:700">Export výdejů z Pohody (.xlsx)</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:3px">Klikni nebo přetáhni — funguje s více roky</div>
+      <div class="drop-btn">Vybrat soubor</div>
+    </div>
+    <input type="file" id="fi" accept=".xlsx,.xls" onchange="handleFile(this.files[0])" style="display:none">
+    <div class="chips">
+      <div class="chip">📈 Obrat & zisk & marže</div><div class="chip">🏆 Top artikly</div>
+      <div class="chip">👥 Zákazníci</div><div class="chip">📊 ABC analýza</div>
+      <div class="chip">📅 Sezónnost</div><div class="chip">🔍 Detail artiklu</div>
+    </div>
+  </div>
+</div>
+
+<div class="dash" id="dash">
+  <!-- YEAR TABS -->
+  <div class="ytabs-bar" id="ytabs-bar">
+    <div class="ytabs-bar-inner">
+      <span class="ytabs-label">Období:</span>
+      <div class="year-tabs" id="ytabs"></div>
+    </div>
+  </div>
+
+  <div class="dash-header">
+    <div><div class="dash-title" id="dash-title">Přehled výdejů zásob</div><div class="dash-sub" id="dash-sub"></div></div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <!-- OBRAT + ZISK MĚSÍČNĚ -->
+  <div class="g21">
+    <div class="card">
+      <div class="card-title">📅 Měsíční obrat a zisk <small id="monthly-lbl"></small></div>
+      <div class="chart-box"><canvas id="ch-monthly"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Marže podle kategorie</div>
+      <div class="chart-box"><canvas id="ch-marze-cat"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TOP ARTIKLY — OBRAT + ZISK -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">🏆 Top 30 artiklů — obrat <small id="top-obrat-lbl"></small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-top-obrat"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">💰 Top 30 artiklů — zisk <small id="top-zisk-lbl"></small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-top-zisk"></table></div>
+    </div>
+  </div>
+
+  <!-- TOP ARTIKLY — MNOŽSTVÍ + MARŽE -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">📦 Top 30 artiklů — prodané množství <small id="top-mno-lbl"></small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-top-mno"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📈 Top 30 artiklů — marže % <small>min. obrat 5 000 Kč</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-top-marze"></table></div>
+    </div>
+  </div>
+
+  <!-- ABC ANALÝZA -->
+  <div class="card mb16">
+    <div class="card-title">🔠 ABC analýza artiklů <small>A = top 80% obratu, B = 15%, C = 5%</small></div>
+    <div id="abc-kpi" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px"></div>
+    <div style="overflow-x:auto"><table class="tbl" id="tbl-abc"></table></div>
+  </div>
+
+  <!-- TOP ZÁKAZNÍCI -->
+  <div class="card mb16">
+    <div class="card-title">👥 Top 30 zákazníků <small id="top-zak-lbl"></small></div>
+    <div style="overflow-x:auto"><table class="tbl" id="tbl-top-zak"></table></div>
+  </div>
+
+  <!-- ZÁKAZNÍK × ARTIKL — kdo co kupuje -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">🔄 Artikly prodávané opakovaně <small>více zákazníků nebo nákupů</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-repeat"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">😴 Artiklů prodáno jen jednou <small>jednorázoví zákazníci</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-oneshot"></table></div>
+    </div>
+  </div>
+
+  <!-- SEZÓNNOST + DEN V TÝDNU -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">🌡 Sezónnost prodejů <small>průměrný měsíční obrat</small></div>
+      <div class="chart-box"><canvas id="ch-sezon"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📆 Prodeje dle dne v týdnu</div>
+      <div class="chart-box"><canvas id="ch-den"></canvas></div>
+    </div>
+  </div>
+
+  <!-- DISTRIBUCE MARŽE + OBRAT V ČASE -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">📊 Distribuce artiklů podle marže %</div>
+      <div class="chart-box"><canvas id="ch-marze-dist"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Distribuce artiklů podle obratu</div>
+      <div class="chart-box"><canvas id="ch-obrat-dist"></canvas></div>
+    </div>
+  </div>
+
+  <!-- SROVNÁNÍ LET (timeline + grouped) -->
+  <div class="card mb16" id="yoy-timeline-card" style="display:none">
+    <div class="card-title">📅 Celá timeline — obrat chronologicky</div>
+    <div class="chart-box" style="height:280px"><canvas id="ch-timeline"></canvas></div>
+  </div>
+  <div class="card mb16" id="yoy-grouped-card" style="display:none">
+    <div class="card-title">📊 Srovnání let po měsících <small>skupinky sloupců vedle sebe</small></div>
+    <div class="chart-box" style="height:300px"><canvas id="ch-grouped"></canvas></div>
+  </div>
+
+  <!-- HLEDÁNÍ ARTIKLU -->
+  <div class="card mb16">
+    <div class="card-title">🔍 Detail artiklu — vyhledávání</div>
+    <input type="text" class="search-input" id="art-q" placeholder="Začni psát název nebo číslo artiklu…" oninput="searchArtikl()">
+    <div id="art-res"></div>
+  </div>
+
+  <!-- ZISKOVOST ARTIKLŮ V ČASE — konsolidovaný přehled -->
+  <div class="card mb16">
+    <div class="card-title">📈 Ziskovost artiklů v čase — Top 30 <small>měsíční trend obrat / zisk / marže</small></div>
+    <div style="overflow-x:auto"><table class="tbl" id="tbl-trend">
+      <thead><tr>
+        <th>#</th>
+        <th>Artikl</th>
+        <th class="r">Obrat</th>
+        <th class="r">Zisk</th>
+        <th class="r">Marže</th>
+        <th class="r">Ks</th>
+        <th class="r">Zákazníků</th>
+        <th style="min-width:160px">Trend obratu</th>
+        <th style="min-width:140px">Marže % v čase</th>
+        <th style="min-width:120px">Zisk v čase</th>
+      </tr></thead>
+      <tbody id="trend-tbody"></tbody>
+    </table></div>
+  </div>
+
+
+  <!-- MARŽE KLESÁ V ČASE -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">📉 Artikly s klesající marží <small>trend posledních měsíců</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-marze-down"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⬇️ Artikly s klesajícími prodeji <small>porovnání první vs. druhá polovina dat</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-sales-down"></table></div>
+    </div>
+  </div>
+
+  <!-- MRTVÁ ZÁSOBA + JEDNOÚČELOVÉ -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">💀 Mrtvá zásoba <small>bez prodeje posledních 60+ dní</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-dead"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚠️ Artikly jen u 1 zákazníka <small>riziko výpadku celého produktu</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-single-cust"></table></div>
+    </div>
+  </div>
+
+  <!-- ZÁKAZNÍCI S NÍZKOU MARŽÍ + CHURN -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">🔻 Zákazníci s nejnižší marží <small>možné příliš velké slevy</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-low-marze-cust"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">😴 Zákazníci co přestali nakupovat <small>min. 2 nákupy, pak ticho 45+ dní od posledního záznamu v datech</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-churn-zas"></table></div>
+    </div>
+  </div>
+
+  <!-- MARŽE ARTIKLU U RŮZNÝCH ZÁKAZNÍKŮ -->
+  <div class="card mb16">
+    <div class="card-title">💹 Marže stejného artiklu u různých zákazníků <small>top artikly s největším rozptylem cen</small></div>
+    <div style="overflow-x:auto"><table class="tbl" id="tbl-marze-spread"></table></div>
+  </div>
+
+  <!-- CROSS-SELL + BASKET -->
+  <div class="card mb16">
+    <div class="card-title">🛒 Nejčastěji kupované kombinace artiklů <small>co se prodává společně</small></div>
+    <div style="overflow-x:auto"><table class="tbl" id="tbl-basket"></table></div>
+  </div>
+
+  <!-- PRŮMĚRNÁ DOBA MEZI NÁKUPY + RETENCE -->
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">⏱ Průměrná doba mezi nákupy <small>artikly — jak rychle se opakují</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-repeat-interval"></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔁 Zákazníci — doba do druhého nákupu <small>kdo se vrátil rychle</small></div>
+      <div style="overflow-x:auto"><table class="tbl" id="tbl-return-time"></table></div>
+    </div>
+  </div>
+
+  <!-- NEJVĚTŠÍ SKOKY OBRATU -->
+  <div class="card mb16">
+    <div class="card-title">🚀 Největší skoky obratu <small>měsíce s největším nárůstem nebo propadem</small></div>
+    <div style="overflow-x:auto"><table class="tbl" id="tbl-jumps"></table></div>
+  </div>
+
+  <!-- HLEDÁNÍ ZÁKAZNÍKA -->
+  <div class="card mb16">
+    <div class="card-title">🔍 Detail zákazníka — co nakupuje</div>
+    <input type="text" class="search-input" id="zak-q" placeholder="Začni psát jméno zákazníka…" oninput="searchZakaznik()">
+    <div id="zak-res"></div>
+  </div>
+
+</div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────
+const DATE_RE = /^\d{1,2}\.\d{2}\.\d{4}$/;
+const ZDROJE = new Set(['FV','PV','VY','ZV','PZ','PP','VF','PF']);
+let allRows=[], years=[], activeYear=null, charts={};
+
+// ── FILE HANDLING ─────────────────────────────────────────
+function handleFile(file){
+  if(!file)return;
+  toast('Načítám a parsuju…','info');
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:false});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+      parseRows(raw);
+    }catch(err){toast('Chyba: '+err.message,'err');}
+  };
+  r.readAsArrayBuffer(file);
+}
+
+function parseRows(raw){
+  const rows=[];
+  let artKod=null, artNazev=null;
+  for(const row of raw){
+    while(row.length<24)row.push(null);
+    const s=v=>(v!==null&&v!==undefined&&String(v).trim()!==''&&String(v).trim()!=='nan')?String(v).trim():'';
+    const c2=s(row[2]), c4=s(row[4]), c6=s(row[6]);
+    const isDate=DATE_RE.test(c2);
+    const isData=isDate&&ZDROJE.has(c4);
+    const isArtikl=c2&&!isDate&&c4===''&&c6&&c6.length>3;
+    if(isArtikl){artKod=c2;artNazev=c6;}
+    else if(isData&&artKod){
+      try{
+        const parts=c2.split('.');
+        const datum=new Date(+parts[2],+parts[1]-1,+parts[0]);
+        const firma=s(row[8])||'Neznámý';
+        const f=firma==='...'?'Neznámý':firma;
+        rows.push({
+          artikl:artKod, nazev:artNazev,
+          datum, rok:datum.getFullYear(), mesic:datum.getMonth(),
+          den:datum.getDay(),
+          zdroj:c4, doklad:c6, firma:f,
+          mnozstvi:parseFloat(row[11])||0,
+          obrat:parseFloat(row[19])||0,
+          zisk:parseFloat(row[22])||0,
+        });
+      }catch(e){}
+    }
+  }
+  allRows=rows;
+  years=[...new Set(rows.map(r=>r.rok))].sort();
+  activeYear=years[years.length-1];
+  buildYTabs();
+  renderAll();
+  document.getElementById('upload-screen').style.display='none';
+  document.getElementById('dash').style.display='block';
+  toast(`Načteno ${rows.length} výdejů, ${new Set(rows.map(r=>r.artikl)).size} artiklů ✓`,'ok');
+}
+
+// ── YEAR TABS ─────────────────────────────────────────────
+function buildYTabs(){
+  const bar=document.getElementById('ytabs-bar');
+  bar.style.display='block';
+  const w=document.getElementById('ytabs');
+  w.innerHTML='';
+  if(years.length>1){
+    const b=document.createElement('button');
+    b.className='ytab'+(activeYear===null?' active':'');
+    b.textContent='Vše';
+    b.onclick=()=>{activeYear=null;buildYTabs();renderAll();};
+    w.appendChild(b);
+  }
+  years.forEach(y=>{
+    const b=document.createElement('button');
+    b.className='ytab'+(activeYear===y?' active':'');
+    b.textContent=y;
+    b.onclick=()=>{activeYear=y;buildYTabs();renderAll();};
+    w.appendChild(b);
+  });
+}
+function getRows(){return activeYear===null?allRows:allRows.filter(r=>r.rok===activeYear);}
+
+// ── RENDER ALL ────────────────────────────────────────────
+function renderAll(){
+  const rows=getRows();
+  const yl=activeYear?`rok ${activeYear}`:`${years[0]}–${years[years.length-1]}`;
+  const uArt=new Set(rows.map(r=>r.artikl)).size;
+  const uZak=new Set(rows.map(r=>r.firma)).size;
+  const sorted=[...rows].sort((a,b)=>a.datum-b.datum);
+  document.getElementById('dash-title').textContent=`Analytika výdejů zásob — ${yl}`;
+  document.getElementById('dash-sub').textContent=`${rows.length} výdejů · ${uArt} artiklů · ${uZak} zákazníků · ${fd(sorted[0]?.datum)} — ${fd(sorted[sorted.length-1]?.datum)}`;
+  ['monthly-lbl','top-obrat-lbl','top-zisk-lbl','top-mno-lbl','top-zak-lbl'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=yl;});
+  renderKPI(rows);
+  renderMonthly(rows);
+  renderMarzeCat(rows);
+  renderTopObrat(rows);
+  renderTopZisk(rows);
+  renderTopMno(rows);
+  renderTopMarze(rows);
+  renderABC(rows);
+  renderTopZak(rows);
+  renderRepeatOneshot(rows);
+  renderSezon();
+  renderDen(rows);
+  renderMarzeDist(rows);
+  renderObratDist(rows);
+  renderYoY();
+  buildTrendList(rows);
+  renderExtended(rows);
+}
+
+// ── KPI ──────────────────────────────────────────────────
+function renderKPI(rows){
+  const obrat=rows.reduce((s,r)=>s+r.obrat,0);
+  const zisk=rows.reduce((s,r)=>s+r.zisk,0);
+  const marze=obrat>0?zisk/obrat*100:0;
+  const mno=rows.reduce((s,r)=>s+r.mnozstvi,0);
+  const uArt=new Set(rows.map(r=>r.artikl)).size;
+  const uZak=new Set(rows.map(r=>r.firma)).size;
+  const avgFak=obrat/rows.length;
+  document.getElementById('kpi-grid').innerHTML=[
+    {icon:'💰',v:fkc(obrat),l:'Celkový obrat',s:`${rows.length} výdejů`,c:'blue'},
+    {icon:'💚',v:fkc(zisk),l:'Celkový zisk',s:`marže ${marze.toFixed(1)}%`,c:'green'},
+    {icon:'📈',v:marze.toFixed(1)+'%',l:'Průměrná marže',s:'zisk / obrat',c:marze>=30?'green':marze>=20?'orange':'red'},
+    {icon:'📦',v:Math.round(mno).toLocaleString('cs-CZ')+' ks',l:'Prodané množství',s:`${uArt} artiklů`,c:'purple'},
+    {icon:'👥',v:uZak,l:'Zákazníků',s:'v tomto období',c:'teal'},
+    {icon:'🧾',v:fkc(avgFak),l:'Průměrný výdej',s:'Kč bez DPH',c:'orange'},
+  ].map(k=>`<div class="kpi ${k.c}"><div class="kpi-icon">${k.icon}</div><div class="kpi-val">${k.v}</div><div class="kpi-lbl">${k.l}</div><div class="kpi-sub">${k.s}</div></div>`).join('');
+}
+
+// ── MĚSÍČNÍ OBRAT + ZISK ──────────────────────────────────
+function renderMonthly(rows){
+  const mn=['Led','Úno','Bře','Dub','Kvě','Čer','Čvc','Srp','Zář','Říj','Lis','Pro'];
+  const so=Array(12).fill(0), sz=Array(12).fill(0);
+  rows.forEach(r=>{so[r.mesic]+=r.obrat;sz[r.mesic]+=r.zisk;});
+  const labels=mn.filter((_,i)=>so[i]>0);
+  const idxs=mn.map((_,i)=>i).filter(i=>so[i]>0);
+  dc('ch-monthly');
+  charts['ch-monthly']=new Chart(document.getElementById('ch-monthly'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Obrat',data:idxs.map(i=>so[i]),backgroundColor:'rgba(200,16,46,.85)',borderRadius:6,borderSkipped:false,yAxisID:'y'},
+      {label:'Zisk',data:idxs.map(i=>sz[i]),backgroundColor:'rgba(22,163,74,.75)',borderRadius:6,borderSkipped:false,yAxisID:'y'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:11}}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fkc(c.raw)}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:'#f0f2f5'},ticks:{callback:v=>fks(v),font:{size:10}}}}}
+  });
+}
+
+// ── MARŽE KATEGORIÍ (brand) ───────────────────────────────
+function renderMarzeCat(rows){
+  // Extrahuj brand z názvu artiklu (první slovo před " - " nebo první slovo)
+  const byBrand={};
+  rows.forEach(r=>{
+    const brand=r.nazev?r.nazev.split(/\s*[-–]\s*/)[0].trim().split(' ')[0]:'Jiné';
+    if(!byBrand[brand])byBrand[brand]={obrat:0,zisk:0};
+    byBrand[brand].obrat+=r.obrat;
+    byBrand[brand].zisk+=r.zisk;
+  });
+  const sorted=Object.entries(byBrand).sort((a,b)=>b[1].obrat-a[1].obrat).slice(0,8);
+  const labels=sorted.map(x=>x[0]);
+  const marze=sorted.map(x=>x[1].obrat>0?(x[1].zisk/x[1].obrat*100):0);
+  const colors=marze.map(m=>m>=35?'rgba(22,163,74,.8)':m>=25?'rgba(14,145,178,.8)':m>=15?'rgba(217,119,6,.8)':'rgba(200,16,46,.8)');
+  dc('ch-marze-cat');
+  charts['ch-marze-cat']=new Chart(document.getElementById('ch-marze-cat'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Marže %',data:marze.map(m=>+m.toFixed(1)),backgroundColor:colors,borderRadius:7,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` Marže: ${c.raw}%`}}},
+      scales:{x:{grid:{color:'#f0f2f5'},ticks:{callback:v=>v+'%',font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+  });
+}
+
+// ── TOP TABULKY ───────────────────────────────────────────
+function gba(rows){
+  const m={};
+  rows.forEach(r=>{
+    if(!m[r.artikl])m[r.artikl]={kod:r.artikl,nazev:r.nazev,obrat:0,zisk:0,mno:0,pocet:0,zakaznici:new Set()};
+    m[r.artikl].obrat+=r.obrat;m[r.artikl].zisk+=r.zisk;m[r.artikl].mno+=r.mnozstvi;
+    m[r.artikl].pocet++;m[r.artikl].zakaznici.add(r.firma);
+  });
+  return m;
+}
+
+function renderTopObrat(rows){
+  const arts=Object.values(gba(rows)).sort((a,b)=>b.obrat-a.obrat).slice(0,30);
+  const mx=arts[0]?.obrat||1;
+  document.getElementById('tbl-top-obrat').innerHTML=topArtHead()+`<tbody>${arts.map((a,i)=>{
+    const m=a.obrat>0?a.zisk/a.obrat*100:0;
+    const rc=i<3?['rn1','rn2','rn3'][i]:'';
+    return `<tr><td><span class="rn ${rc}">${i+1}</span></td>
+    <td><div style="font-size:11px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc" title="${esc(a.nazev)}">${esc(a.nazev)}</span></td>
+    <td class="r bold">${fkc(a.obrat)}<span class="bar-bg"><span class="bar-fill" style="width:${(a.obrat/mx*100).toFixed(0)}%"></span></span></td>
+    <td class="r green">${fkc(a.zisk)}</td>
+    <td class="r"><span class="pill ${m>=30?'pill-green':m>=20?'pill-teal':m>=10?'pill-orange':'pill-red'}">${m.toFixed(1)}%</span></td>
+    <td class="r dim">${Math.round(a.mno)}</td>
+    <td class="r dim">${a.zakaznici.size}</td></tr>`;
+  }).join('')}</tbody>`;
+}
+
+function renderTopZisk(rows){
+  const arts=Object.values(gba(rows)).sort((a,b)=>b.zisk-a.zisk).slice(0,30);
+  const mx=arts[0]?.zisk||1;
+  document.getElementById('tbl-top-zisk').innerHTML=topArtHead()+`<tbody>${arts.map((a,i)=>{
+    const m=a.obrat>0?a.zisk/a.obrat*100:0;
+    const rc=i<3?['rn1','rn2','rn3'][i]:'';
+    return `<tr><td><span class="rn ${rc}">${i+1}</span></td>
+    <td><div style="font-size:11px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc" title="${esc(a.nazev)}">${esc(a.nazev)}</span></td>
+    <td class="r dim">${fkc(a.obrat)}</td>
+    <td class="r teal">${fkc(a.zisk)}<span class="bar-bg"><span class="bar-fill bf-t" style="width:${(a.zisk/mx*100).toFixed(0)}%"></span></span></td>
+    <td class="r"><span class="pill ${m>=30?'pill-green':m>=20?'pill-teal':m>=10?'pill-orange':'pill-red'}">${m.toFixed(1)}%</span></td>
+    <td class="r dim">${Math.round(a.mno)}</td>
+    <td class="r dim">${a.zakaznici.size}</td></tr>`;
+  }).join('')}</tbody>`;
+}
+
+function renderTopMno(rows){
+  const arts=Object.values(gba(rows)).sort((a,b)=>b.mno-a.mno).slice(0,30);
+  const mx=arts[0]?.mno||1;
+  document.getElementById('tbl-top-mno').innerHTML=`<thead><tr><th>#</th><th>Artikl</th><th class="r">Množství</th><th class="r">Obrat</th><th class="r">Zisk</th></tr></thead>
+  <tbody>${arts.map((a,i)=>{
+    const rc=i<3?['rn1','rn2','rn3'][i]:'';
+    return `<tr><td><span class="rn ${rc}">${i+1}</span></td>
+    <td><div style="font-size:11px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc" title="${esc(a.nazev)}">${esc(a.nazev)}</span></td>
+    <td class="r bold">${Math.round(a.mno).toLocaleString('cs-CZ')} ks<span class="bar-bg"><span class="bar-fill bf-b" style="width:${(a.mno/mx*100).toFixed(0)}%"></span></span></td>
+    <td class="r dim">${fkc(a.obrat)}</td>
+    <td class="r dim">${fkc(a.zisk)}</td></tr>`;
+  }).join('')}</tbody>`;
+}
+
+function renderTopMarze(rows){
+  const arts=Object.values(gba(rows)).filter(a=>a.obrat>=5000).map(a=>({...a,marze:a.obrat>0?a.zisk/a.obrat*100:0})).sort((a,b)=>b.marze-a.marze).slice(0,30);
+  document.getElementById('tbl-top-marze').innerHTML=`<thead><tr><th>#</th><th>Artikl</th><th class="r">Marže %</th><th class="r">Zisk</th><th class="r">Obrat</th></tr></thead>
+  <tbody>${arts.map((a,i)=>{
+    const rc=i<3?['rn1','rn2','rn3'][i]:'';
+    return `<tr><td><span class="rn ${rc}">${i+1}</span></td>
+    <td><div style="font-size:11px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc" title="${esc(a.nazev)}">${esc(a.nazev)}</span></td>
+    <td class="r"><span class="pill ${a.marze>=40?'pill-green':a.marze>=25?'pill-teal':'pill-orange'}">${a.marze.toFixed(1)}%</span>
+    <span class="bar-bg"><span class="bar-fill bf-g" style="width:${Math.min(a.marze*2,100).toFixed(0)}%"></span></span></td>
+    <td class="r green">${fkc(a.zisk)}</td>
+    <td class="r dim">${fkc(a.obrat)}</td></tr>`;
+  }).join('')}</tbody>`;
+}
+
+function topArtHead(){return`<thead><tr><th>#</th><th>Artikl / Název</th><th class="r">Obrat</th><th class="r">Zisk</th><th class="r">Marže</th><th class="r">Ks</th><th class="r">Zákazníků</th></tr></thead>`;}
+
+// ── ABC ANALÝZA ───────────────────────────────────────────
+function renderABC(rows){
+  const arts=Object.values(gba(rows)).sort((a,b)=>b.obrat-a.obrat);
+  const totalO=arts.reduce((s,a)=>s+a.obrat,0);
+  let cum=0;
+  arts.forEach(a=>{cum+=a.obrat;a.abc=cum/totalO<=0.8?'A':cum/totalO<=0.95?'B':'C';a.cumPct=cum/totalO*100;});
+  const aGrp={A:{cnt:0,obrat:0,zisk:0},B:{cnt:0,obrat:0,zisk:0},C:{cnt:0,obrat:0,zisk:0}};
+  arts.forEach(a=>{aGrp[a.abc].cnt++;aGrp[a.abc].obrat+=a.obrat;aGrp[a.abc].zisk+=a.zisk;});
+  const clr={A:'var(--red)',B:'var(--orange)',C:'var(--text3)'};
+  const bg={A:'#fee2e2',B:'#fef3c7',C:'#f3f4f6'};
+  document.getElementById('abc-kpi').innerHTML=['A','B','C'].map(k=>`
+    <div style="background:${bg[k]};border-radius:10px;padding:14px 16px">
+      <div style="font-size:24px;font-weight:900;color:${clr[k]}">Skupina ${k}</div>
+      <div style="font-size:13px;font-weight:700;margin-top:6px">${aGrp[k].cnt} artiklů (${(aGrp[k].cnt/arts.length*100).toFixed(0)}%)</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">Obrat: ${fkc(aGrp[k].obrat)} · Zisk: ${fkc(aGrp[k].zisk)}</div>
+    </div>`).join('');
+  document.getElementById('tbl-abc').innerHTML=`<thead><tr><th>Sk.</th><th>#</th><th>Artikl</th><th class="r">Obrat</th><th class="r">Zisk</th><th class="r">Marže</th><th class="r">Kum. %</th></tr></thead>
+  <tbody>${arts.slice(0,30).map((a,i)=>{
+    const m=a.obrat>0?a.zisk/a.obrat*100:0;
+    const pc={A:'pill-red',B:'pill-orange',C:'pill-gray'};
+    return `<tr><td><span class="pill ${pc[a.abc]}">${a.abc}</span></td>
+    <td class="dim">${i+1}</td>
+    <td><div style="font-size:11px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc" title="${esc(a.nazev)}">${esc(a.nazev)}</span></td>
+    <td class="r bold">${fkc(a.obrat)}</td>
+    <td class="r green">${fkc(a.zisk)}</td>
+    <td class="r dim">${m.toFixed(1)}%</td>
+    <td class="r dim">${a.cumPct.toFixed(1)}%</td></tr>`;
+  }).join('')}</tbody>`;
+}
+
+// ── TOP ZÁKAZNÍCI ─────────────────────────────────────────
+function renderTopZak(rows){
+  const m={};
+  rows.forEach(r=>{
+    if(!m[r.firma])m[r.firma]={name:r.firma,obrat:0,zisk:0,pocet:0,artikly:new Set()};
+    m[r.firma].obrat+=r.obrat;m[r.firma].zisk+=r.zisk;m[r.firma].pocet++;m[r.firma].artikly.add(r.artikl);
+  });
+  const top=Object.values(m).sort((a,b)=>b.obrat-a.obrat).slice(0,30);
+  const mx=top[0]?.obrat||1;
+  const totalO=rows.reduce((s,r)=>s+r.obrat,0);
+  document.getElementById('tbl-top-zak').innerHTML=`<thead><tr><th>#</th><th>Zákazník</th><th class="r">Obrat</th><th class="r">Zisk</th><th class="r">Marže</th><th class="r">Podíl %</th><th class="r">Výdejů</th><th class="r">Artiklů</th></tr></thead>
+  <tbody>${top.map((z,i)=>{
+    const m2=z.obrat>0?z.zisk/z.obrat*100:0;
+    const rc=i<3?['rn1','rn2','rn3'][i]:'';
+    const podil=(z.obrat/totalO*100).toFixed(1);
+    return `<tr><td><span class="rn ${rc}">${i+1}</span></td>
+    <td><span class="trunc" title="${esc(z.name)}">${esc(z.name)}</span></td>
+    <td class="r bold">${fkc(z.obrat)}<span class="bar-bg"><span class="bar-fill" style="width:${(z.obrat/mx*100).toFixed(0)}%"></span></span></td>
+    <td class="r green">${fkc(z.zisk)}</td>
+    <td class="r"><span class="pill ${m2>=30?'pill-green':m2>=20?'pill-teal':'pill-orange'}">${m2.toFixed(1)}%</span></td>
+    <td class="r dim">${podil}%</td>
+    <td class="r dim">${z.pocet}</td>
+    <td class="r dim">${z.artikly.size}</td></tr>`;
+  }).join('')}</tbody>`;
+}
+
+// ── REPEAT / ONESHOT ──────────────────────────────────────
+function renderRepeatOneshot(rows){
+  const arts=gba(rows);
+  const repeat=Object.values(arts).filter(a=>a.zakaznici.size>=2||a.pocet>=3).sort((a,b)=>b.pocet-a.pocet).slice(0,15);
+  const oneshot=Object.values(arts).filter(a=>a.zakaznici.size===1&&a.pocet===1).sort((a,b)=>b.obrat-a.obrat).slice(0,15);
+  document.getElementById('tbl-repeat').innerHTML=`<thead><tr><th>#</th><th>Artikl</th><th class="r">Prodejů</th><th class="r">Zákazníků</th><th class="r">Obrat</th></tr></thead>
+  <tbody>${repeat.map((a,i)=>`<tr><td><span class="rn ${i<3?['rn1','rn2','rn3'][i]:''}">${i+1}</span></td>
+  <td><div style="font-size:11px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc" title="${esc(a.nazev)}">${esc(a.nazev)}</span></td>
+  <td class="r bold">${a.pocet}<span class="bar-bg"><span class="bar-fill bf-b" style="width:${(a.pocet/repeat[0].pocet*100).toFixed(0)}%"></span></span></td>
+  <td class="r dim">${a.zakaznici.size}</td><td class="r dim">${fkc(a.obrat)}</td></tr>`).join('')}</tbody>`;
+  document.getElementById('tbl-oneshot').innerHTML=`<thead><tr><th>#</th><th>Artikl</th><th class="r">Obrat</th><th class="r">Zisk</th></tr></thead>
+  <tbody>${oneshot.map((a,i)=>`<tr><td class="dim">${i+1}</td>
+  <td><div style="font-size:11px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc" title="${esc(a.nazev)}">${esc(a.nazev)}</span></td>
+  <td class="r dim">${fkc(a.obrat)}</td><td class="r dim">${fkc(a.zisk)}</td></tr>`).join('')}</tbody>`;
+}
+
+// ── SEZÓNNOST ─────────────────────────────────────────────
+function renderSezon(){
+  const mn=['Led','Úno','Bře','Dub','Kvě','Čer','Čvc','Srp','Zář','Říj','Lis','Pro'];
+  const sums=Array(12).fill(0);
+  allRows.forEach(r=>sums[r.mesic]+=r.obrat);
+  const maxS=Math.max(...sums);
+  const colors=sums.map(v=>{const p=v/maxS;return p>.8?'rgba(200,16,46,.9)':p>.5?'rgba(200,16,46,.55)':'rgba(200,16,46,.25)';});
+  dc('ch-sezon');
+  charts['ch-sezon']=new Chart(document.getElementById('ch-sezon'),{type:'bar',data:{labels:mn,datasets:[{label:'Obrat',data:sums,backgroundColor:colors,borderRadius:7,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'  '+fkc(c.raw)}}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:'#f0f2f5'},ticks:{callback:v=>fks(v),font:{size:10}}}}}});
+}
+
+function renderDen(rows){
+  const dny=['Ned','Po','Út','St','Čt','Pá','So'];
+  const order=[1,2,3,4,5,6,0];
+  const counts=Array(7).fill(0);
+  rows.forEach(r=>counts[r.den]++);
+  const colors=order.map(i=>i===0||i===6?'rgba(156,163,175,.6)':'rgba(37,99,235,.8)');
+  dc('ch-den');
+  charts['ch-den']=new Chart(document.getElementById('ch-den'),{type:'bar',data:{labels:order.map(i=>dny[i]),datasets:[{label:'Výdejů',data:order.map(i=>counts[i]),backgroundColor:colors,borderRadius:7,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:'#f0f2f5'},ticks:{font:{size:10}}}}}});
+}
+
+// ── DISTRIBUCE ────────────────────────────────────────────
+function renderMarzeDist(rows){
+  const arts=Object.values(gba(rows)).map(a=>a.obrat>0?a.zisk/a.obrat*100:0);
+  const bk=[{l:'< 0%',mn:-Infinity,mx:0},{l:'0–10%',mn:0,mx:10},{l:'10–20%',mn:10,mx:20},{l:'20–30%',mn:20,mx:30},{l:'30–40%',mn:30,mx:40},{l:'40–50%',mn:40,mx:50},{l:'> 50%',mn:50,mx:Infinity}];
+  const counts=bk.map(b=>arts.filter(m=>m>=b.mn&&m<b.mx).length);
+  const colors=['#b91c1c','#d97706','#ca8a04','#16a34a','#0891b2','#2563eb','#7c3aed'];
+  dc('ch-marze-dist');
+  charts['ch-marze-dist']=new Chart(document.getElementById('ch-marze-dist'),{type:'bar',data:{labels:bk.map(b=>b.l),datasets:[{label:'Artiklů',data:counts,backgroundColor:colors,borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f0f2f5'},ticks:{stepSize:1,font:{size:10}}}}}});
+}
+
+function renderObratDist(rows){
+  const arts=Object.values(gba(rows));
+  const bk=[{l:'< 1 tis.',mn:0,mx:1000},{l:'1–5 tis.',mn:1000,mx:5000},{l:'5–10 tis.',mn:5000,mx:10000},{l:'10–25 tis.',mn:10000,mx:25000},{l:'25–50 tis.',mn:25000,mx:50000},{l:'> 50 tis.',mn:50000,mx:Infinity}];
+  const counts=bk.map(b=>arts.filter(a=>a.obrat>=b.mn&&a.obrat<b.mx).length);
+  dc('ch-obrat-dist');
+  charts['ch-obrat-dist']=new Chart(document.getElementById('ch-obrat-dist'),{type:'bar',data:{labels:bk.map(b=>b.l),datasets:[{label:'Artiklů',data:counts,backgroundColor:['#dbeafe','#93c5fd','#60a5fa','#3b82f6','#2563eb','#1d4ed8'],borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f0f2f5'},ticks:{stepSize:1,font:{size:10}}}}}});
+}
+
+// ── YoY GRAFY ─────────────────────────────────────────────
+function renderYoY(){
+  const mn=['Led','Úno','Bře','Dub','Kvě','Čer','Čvc','Srp','Zář','Říj','Lis','Pro'];
+  const colors=['#C8102E','#2563eb','#16a34a','#d97706','#7c3aed'];
+  if(years.length<2){document.getElementById('yoy-timeline-card').style.display='none';document.getElementById('yoy-grouped-card').style.display='none';return;}
+  document.getElementById('yoy-timeline-card').style.display='block';
+  document.getElementById('yoy-grouped-card').style.display='block';
+
+  // Timeline
+  const tlLabels=[],tlData=[],tlColors=[];
+  years.forEach((rok,idx)=>{
+    const rr=allRows.filter(r=>r.rok===rok);
+    const byM=Array(12).fill(0);
+    rr.forEach(r=>byM[r.mesic]+=r.obrat);
+    byM.forEach((v,m)=>{if(v>0){tlLabels.push(mn[m]+" '"+String(rok).slice(2));tlData.push(v);tlColors.push(colors[idx%colors.length]);}});
+  });
+  dc('ch-timeline');
+  charts['ch-timeline']=new Chart(document.getElementById('ch-timeline'),{type:'bar',data:{labels:tlLabels,datasets:[{label:'Obrat',data:tlData,backgroundColor:tlColors,borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'  '+fkc(c.raw)}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45}},y:{grid:{color:'#f0f2f5'},ticks:{callback:v=>fks(v),font:{size:10}}}}}});
+
+  // Grouped
+  const gds=years.map((rok,idx)=>{
+    const rr=allRows.filter(r=>r.rok===rok);
+    const data=Array(12).fill(null);
+    rr.forEach(r=>data[r.mesic]=(data[r.mesic]||0)+r.obrat);
+    return{label:String(rok),data,backgroundColor:colors[idx%colors.length],borderRadius:5,borderSkipped:false};
+  });
+  dc('ch-grouped');
+  charts['ch-grouped']=new Chart(document.getElementById('ch-grouped'),{type:'bar',data:{labels:mn,datasets:gds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:12},padding:14,usePointStyle:true}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fkc(c.raw||0)}`}}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:'#f0f2f5'},ticks:{callback:v=>fks(v),font:{size:10}}}}}});
+}
+
+// ── VYHLEDÁVÁNÍ ARTIKLU ───────────────────────────────────
+function searchArtikl(){
+  const q=document.getElementById('art-q').value.toLowerCase().trim();
+  const el=document.getElementById('art-res');
+  if(q.length<2){el.innerHTML='';return;}
+  const arts=Object.values(gba(allRows)).filter(a=>a.nazev.toLowerCase().includes(q)||a.kod.toLowerCase().includes(q)).sort((a,b)=>b.obrat-a.obrat).slice(0,4);
+  if(!arts.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:8px">Nenalezeno</div>';return;}
+  el.innerHTML=arts.map(a=>{
+    const m=a.obrat>0?a.zisk/a.obrat*100:0;
+    const buyers=allRows.filter(r=>r.artikl===a.kod);
+    const byFirma={};buyers.forEach(r=>{if(!byFirma[r.firma])byFirma[r.firma]={obrat:0,mno:0};byFirma[r.firma].obrat+=r.obrat;byFirma[r.firma].mno+=r.mnozstvi;});
+    const topBuyers=Object.entries(byFirma).sort((a,b)=>b[1].obrat-a[1].obrat).slice(0,5);
+    const dates=buyers.map(r=>r.datum).sort((a,b)=>a-b);
+    return `<div style="background:#f8f9fb;border-radius:12px;padding:16px;margin-bottom:10px;border:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3);font-weight:700">${esc(a.kod)}</div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:12px">${esc(a.nazev)}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px">
+        ${cs(fkc(a.obrat),'Celkový obrat','blue')}
+        ${cs(fkc(a.zisk),'Celkový zisk','green')}
+        ${cs(m.toFixed(1)+'%','Marže',m>=30?'green':m>=20?'teal':'orange')}
+        ${cs(Math.round(a.mno)+' ks','Prodáno','purple')}
+        ${cs(a.pocet,'Transakcí','dim')}
+        ${cs(a.zakaznici.size,'Zákazníků','teal')}
+        ${cs(fd(dates[0]),'První prodej','dim')}
+        ${cs(fd(dates[dates.length-1]),'Poslední prodej','dim')}
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px">Top zákazníci:</div>
+      ${topBuyers.map(([f,d])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;font-size:12px"><span>${esc(f)}</span><span style="font-weight:700">${fkc(d.obrat)} · ${Math.round(d.mno)} ks</span></div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ── VYHLEDÁVÁNÍ ZÁKAZNÍKA ─────────────────────────────────
+function searchZakaznik(){
+  const q=document.getElementById('zak-q').value.toLowerCase().trim();
+  const el=document.getElementById('zak-res');
+  if(q.length<2){el.innerHTML='';return;}
+  const byZak={};
+  allRows.forEach(r=>{
+    if(!byZak[r.firma])byZak[r.firma]={name:r.firma,obrat:0,zisk:0,pocet:0,artikly:[]};
+    byZak[r.firma].obrat+=r.obrat;byZak[r.firma].zisk+=r.zisk;byZak[r.firma].pocet++;
+    byZak[r.firma].artikly.push(r);
+  });
+  const matches=Object.values(byZak).filter(z=>z.name.toLowerCase().includes(q)).sort((a,b)=>b.obrat-a.obrat).slice(0,3);
+  if(!matches.length){el.innerHTML='<div style="color:var(--text3);font-size:13px;padding:8px">Nenalezeno</div>';return;}
+  el.innerHTML=matches.map(z=>{
+    const m=z.obrat>0?z.zisk/z.obrat*100:0;
+    const byArt={};z.artikly.forEach(r=>{if(!byArt[r.artikl])byArt[r.artikl]={kod:r.artikl,nazev:r.nazev,obrat:0,mno:0,pocet:0};byArt[r.artikl].obrat+=r.obrat;byArt[r.artikl].mno+=r.mnozstvi;byArt[r.artikl].pocet++;});
+    const topArt=Object.values(byArt).sort((a,b)=>b.obrat-a.obrat).slice(0,6);
+    return `<div style="background:#f8f9fb;border-radius:12px;padding:16px;margin-bottom:10px;border:1px solid var(--border)">
+      <div style="font-size:15px;font-weight:800;margin-bottom:12px">${esc(z.name)}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px">
+        ${cs(fkc(z.obrat),'Obrat celkem','blue')}
+        ${cs(fkc(z.zisk),'Zisk celkem','green')}
+        ${cs(m.toFixed(1)+'%','Marže na zákazníkovi',m>=30?'green':m>=20?'teal':'orange')}
+        ${cs(z.pocet,'Výdejů','purple')}
+        ${cs(Object.keys(byArt).length,'Různých artiklů','teal')}
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px">Co kupuje (top artikly):</div>
+      ${topArt.map(a=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;font-size:12px">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px">${esc(a.nazev)}</span>
+        <span style="font-weight:700;white-space:nowrap">${fkc(a.obrat)} · ${Math.round(a.mno)} ks</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function cs(val,lbl,cls){const C={blue:'var(--blue)',red:'var(--red)',green:'var(--green)',orange:'var(--orange)',purple:'var(--purple)',teal:'var(--teal)',dim:'var(--text2)'};return `<div style="background:#fff;border-radius:8px;padding:9px 11px;border:1px solid var(--border)"><div style="font-size:15px;font-weight:800;color:${C[cls]||'var(--text)'};letter-spacing:-.3px">${val}</div><div style="font-size:11px;color:var(--text2);margin-top:1px">${lbl}</div></div>`;}
+
+// ── ZISKOVOST ARTIKLŮ V ČASE — konsolidovaná tabulka ─────
+let trendSparkCharts = {};
+
+function buildTrendList(rows) {
+  const arts = Object.values(gba(allRows)).sort((a,b) => b.obrat - a.obrat).slice(0, 30);
+  renderTrendTable(arts);
+}
+
+function renderTrendTable(arts) {
+  // Zničit staré sparkline charty
+  Object.values(trendSparkCharts).forEach(c => c.destroy());
+  trendSparkCharts = {};
+
+  // Sestav všechny měsíce ze všech dat jako osu X (společná)
+  const allMonthKeys = [...new Set(allRows.map(r =>
+    r.datum.getFullYear()+'-'+String(r.datum.getMonth()+1).padStart(2,'0')
+  ))].sort();
+  const mn = ['L','Ú','B','D','K','Č','Č','S','Z','Ř','N','P'];
+
+  const tbody = document.getElementById('trend-tbody');
+  tbody.innerHTML = arts.map((a, i) => {
+    const m = a.obrat > 0 ? a.zisk/a.obrat*100 : 0;
+    const rc = i<3?['rn1','rn2','rn3'][i]:'';
+    const marzePill = m>=30?'pill-green':m>=20?'pill-teal':m>=10?'pill-orange':'pill-red';
+    return `<tr>
+      <td><span class="rn ${rc}">${i+1}</span></td>
+      <td style="max-width:200px">
+        <div style="font-size:10px;color:var(--text3)">${esc(a.kod)}</div>
+        <div style="font-size:12px;font-weight:600;white-space:normal;line-height:1.3">${esc(a.nazev)}</div>
+      </td>
+      <td class="r bold">${fkc(a.obrat)}</td>
+      <td class="r green">${fkc(a.zisk)}</td>
+      <td class="r"><span class="pill ${marzePill}">${m.toFixed(1)}%</span></td>
+      <td class="r dim">${Math.round(a.mno)} ks</td>
+      <td class="r dim">${a.zakaznici.size}</td>
+      <td style="padding:6px 10px;vertical-align:middle"><canvas id="spark-o-${i}" height="52" style="display:block;width:100%;height:52px"></canvas></td>
+      <td style="padding:6px 10px;vertical-align:middle"><canvas id="spark-m-${i}" height="52" style="display:block;width:100%;height:52px"></canvas></td>
+      <td style="padding:6px 10px;vertical-align:middle"><canvas id="spark-z-${i}" height="52" style="display:block;width:100%;height:52px"></canvas></td>
+    </tr>`;
+  }).join('');
+
+  // Počkej na render DOM pak kresli sparklines
+  requestAnimationFrame(() => {
+    arts.forEach((a, i) => {
+      const artRows = allRows.filter(r => r.artikl === a.kod);
+      const byMonth = {};
+      artRows.forEach(r => {
+        const key = r.datum.getFullYear()+'-'+String(r.datum.getMonth()+1).padStart(2,'0');
+        if(!byMonth[key])byMonth[key]={obrat:0,zisk:0};
+        byMonth[key].obrat+=r.obrat;
+        byMonth[key].zisk+=r.zisk;
+      });
+
+      const keys = Object.keys(byMonth).sort();
+      if(!keys.length) return;
+
+      const labels = keys.map(k=>{const[y,m]=k.split('-');return mn[+m-1]+"'"+y.slice(2);});
+      const obratData = keys.map(k=>byMonth[k].obrát||byMonth[k].obrat||0);
+      const marzeData = keys.map(k=>byMonth[k].obrat>0?byMonth[k].zisk/byMonth[k].obrat*100:0);
+
+      // Barevné sloupce — obrat: vždy červená/oranžová gradient od průměru
+      const avgObrat = obratData.length ? obratData.reduce((s,v)=>s+v,0)/obratData.length : 0;
+      const avgMarze = marzeData.length ? marzeData.reduce((s,v)=>s+v,0)/marzeData.length : 0;
+
+      const obratColors = obratData.map(v => v >= avgObrat*1.1 ? 'rgba(22,163,74,.85)' : v >= avgObrat*0.8 ? 'rgba(14,145,178,.8)' : 'rgba(200,16,46,.8)');
+      const marzeColors = marzeData.map(v => v >= 30 ? 'rgba(22,163,74,.85)' : v >= 20 ? 'rgba(14,145,178,.8)' : v >= 10 ? 'rgba(217,119,6,.8)' : 'rgba(200,16,46,.8)');
+      const ziskColors  = obratData.map(v => v >= avgObrat ? 'rgba(22,163,74,.75)' : 'rgba(200,16,46,.65)');
+
+      const sparkOpts = (data, colors, fmt) => ({
+        type:'bar',
+        data:{labels, datasets:[{data, backgroundColor:colors, borderRadius:2, borderSkipped:false}]},
+        options:{
+          responsive:false, maintainAspectRatio:false, animation:false,
+          plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>fmt(c.raw)}}},
+          scales:{x:{display:false}, y:{display:false, min:0}}
+        }
+      });
+
+      const co = document.getElementById('spark-o-'+i);
+      const cm = document.getElementById('spark-m-'+i);
+      const cz = document.getElementById('spark-z-'+i);
+      const ziskData = keys.map(k=>byMonth[k].zisk||0);
+      if(co){trendSparkCharts['o'+i]=new Chart(co, sparkOpts(obratData, obratColors, fkc));}
+      if(cm){trendSparkCharts['m'+i]=new Chart(cm, sparkOpts(marzeData, marzeColors, v=>v.toFixed(1)+'%'));}
+      if(cz){trendSparkCharts['z'+i]=new Chart(cz, sparkOpts(ziskData, ziskColors, fkc));}
+    });
+  });
+}
+
+
+// ══════════════════════════════════════════════════════════
+// ROZŠÍŘENÉ ANALYTIKY
+// ══════════════════════════════════════════════════════════
+
+function renderExtended(rows) {
+  renderMarzeDown(rows);
+  renderSalesDown(rows);
+  renderDeadStock(rows);
+  renderSingleCust(rows);
+  renderLowMarzeCust(rows);
+  renderChurnZas(rows);
+  renderMarzeSpread(rows);
+  renderBasket(rows);
+  renderRepeatInterval(rows);
+  renderReturnTime(rows);
+  renderJumps(rows);
+}
+
+// ── KLESAJÍCÍ MARŽE ───────────────────────────────────────
+function renderMarzeDown(rows) {
+  // Jen artikly s alespoň 5 transakcemi, kladným obratem a ziskem, bez storen
+  const arts = Object.values(gba(rows)).filter(a => a.pocet >= 5 && a.obrat > 1000 && a.zisk > 0);
+  const results = arts.map(a => {
+    const artRows = allRows.filter(r=>r.artikl===a.kod && r.obrat>0 && r.zisk>0);
+    if(artRows.length < 5) return null;
+    const byM = {};
+    artRows.forEach(r=>{
+      const k=r.datum.getFullYear()+'-'+String(r.datum.getMonth()+1).padStart(2,'0');
+      if(!byM[k])byM[k]={o:0,z:0,n:0};byM[k].o+=r.obrat;byM[k].z+=r.zisk;byM[k].n++;
+    });
+    const keys=Object.keys(byM).sort();
+    if(keys.length<3)return null;
+    // Filtruj měsíce s reálnou marží (0–100%)
+    const marzeMesice=keys.map(k=>byM[k].o>0?byM[k].z/byM[k].o*100:null).filter(m=>m!==null&&m>=0&&m<=100);
+    if(marzeMesice.length<3)return null;
+    const half=Math.floor(marzeMesice.length/2);
+    const prve=marzeMesice.slice(0,half);
+    const druhe=marzeMesice.slice(half);
+    const avgPrve=prve.reduce((s,v)=>s+v,0)/prve.length;
+    const avgDruhe=druhe.reduce((s,v)=>s+v,0)/druhe.length;
+    const pokles=avgPrve-avgDruhe;
+    // Pouze reálné poklesy do 100 pp
+    if(pokles<=0||pokles>100||avgPrve>100||avgDruhe>100)return null;
+    return{...a,avgPrve,avgDruhe,pokles};
+  }).filter(Boolean).sort((a,b)=>b.pokles-a.pokles).slice(0,15);
+
+  document.getElementById('tbl-marze-down').innerHTML=`<thead><tr><th>#</th><th>Artikl</th><th class="r">Marže dříve</th><th class="r">Marže nyní</th><th class="r">Pokles</th><th class="r">Obrat</th></tr></thead>
+  <tbody>${results.map((a,i)=>`<tr>
+    <td><span class="rn">${i+1}</span></td>
+    <td><div style="font-size:10px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc">${esc(a.nazev)}</span></td>
+    <td class="r dim">${a.avgPrve.toFixed(1)}%</td>
+    <td class="r red">${a.avgDruhe.toFixed(1)}%</td>
+    <td class="r"><span class="pill pill-red">−${a.pokles.toFixed(1)} pp</span></td>
+    <td class="r dim">${fkc(a.obrat)}</td>
+  </tr>`).join('')}</tbody>`;
+}
+
+// ── KLESAJÍCÍ PRODEJE ─────────────────────────────────────
+function renderSalesDown(rows) {
+  const arts = Object.values(gba(rows)).filter(a=>a.pocet>=3);
+  const results = arts.map(a=>{
+    const byM={};
+    allRows.filter(r=>r.artikl===a.kod).forEach(r=>{
+      const k=r.datum.getFullYear()+'-'+String(r.datum.getMonth()+1).padStart(2,'0');
+      if(!byM[k])byM[k]=0;byM[k]+=r.obrat;
+    });
+    const keys=Object.keys(byM).sort();
+    if(keys.length<3)return null;
+    const half=Math.floor(keys.length/2);
+    const prve=keys.slice(0,half).reduce((s,k)=>s+byM[k],0)/half;
+    const druhe=keys.slice(half).reduce((s,k)=>s+byM[k],0)/(keys.length-half);
+    const pokles=prve-druhe;
+    return pokles>0?{...a,prve,druhe,pokles,pct:prve>0?pokles/prve*100:0}:null;
+  }).filter(Boolean).sort((a,b)=>b.pct-a.pct).slice(0,15);
+
+  document.getElementById('tbl-sales-down').innerHTML=`<thead><tr><th>#</th><th>Artikl</th><th class="r">Ø dříve/měsíc</th><th class="r">Ø nyní/měsíc</th><th class="r">Pokles %</th></tr></thead>
+  <tbody>${results.map((a,i)=>`<tr>
+    <td><span class="rn">${i+1}</span></td>
+    <td><div style="font-size:10px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc">${esc(a.nazev)}</span></td>
+    <td class="r dim">${fkc(a.prve)}</td>
+    <td class="r red">${fkc(a.druhe)}</td>
+    <td class="r"><span class="pill pill-red">−${a.pct.toFixed(0)}%</span></td>
+  </tr>`).join('')}</tbody>`;
+}
+
+// ── MRTVÁ ZÁSOBA ──────────────────────────────────────────
+function renderDeadStock(rows) {
+  const now = new Date();
+  const arts = gba(allRows);
+  const dead = Object.values(arts).map(a=>{
+    const lastSale=allRows.filter(r=>r.artikl===a.kod).map(r=>r.datum).sort((a,b)=>b-a)[0];
+    const daysSince=lastSale?Math.round((now-lastSale)/86400000):999;
+    return{...a,lastSale,daysSince};
+  }).filter(a=>a.daysSince>=60).sort((a,b)=>b.daysSince-a.daysSince).slice(0,15);
+
+  document.getElementById('tbl-dead').innerHTML=`<thead><tr><th>#</th><th>Artikl</th><th class="r">Poslední prodej</th><th class="r">Dní bez prodeje</th><th class="r">Celk. obrat</th></tr></thead>
+  <tbody>${dead.map((a,i)=>`<tr>
+    <td><span class="rn">${i+1}</span></td>
+    <td><div style="font-size:10px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc">${esc(a.nazev)}</span></td>
+    <td class="r dim">${fd(a.lastSale)}</td>
+    <td class="r"><span class="pill ${a.daysSince>=90?'pill-red':'pill-orange'}">${a.daysSince} dní</span></td>
+    <td class="r dim">${fkc(a.obrat)}</td>
+  </tr>`).join('')}</tbody>`;
+}
+
+// ── ARTIKLY JEN U 1 ZÁKAZNÍKA ─────────────────────────────
+function renderSingleCust(rows) {
+  const arts = Object.values(gba(rows)).filter(a=>a.zakaznici.size===1&&a.obrat>2000).sort((a,b)=>b.obrat-a.obrat).slice(0,15);
+  document.getElementById('tbl-single-cust').innerHTML=`<thead><tr><th>#</th><th>Artikl</th><th class="r">Zákazník</th><th class="r">Obrat</th><th class="r">Transakcí</th></tr></thead>
+  <tbody>${arts.map((a,i)=>{
+    const cust=[...a.zakaznici][0];
+    return`<tr>
+      <td><span class="rn">${i+1}</span></td>
+      <td><div style="font-size:10px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc">${esc(a.nazev)}</span></td>
+      <td><span class="trunc" style="max-width:120px;color:var(--text2)">${esc(cust)}</span></td>
+      <td class="r bold">${fkc(a.obrat)}</td>
+      <td class="r dim">${a.pocet}</td>
+    </tr>`;
+  }).join('')}</tbody>`;
+}
+
+// ── ZÁKAZNÍCI S NÍZKOU MARŽÍ ──────────────────────────────
+function renderLowMarzeCust(rows) {
+  const byZak={};
+  rows.forEach(r=>{
+    if(!byZak[r.firma])byZak[r.firma]={name:r.firma,obrat:0,zisk:0,pocet:0};
+    byZak[r.firma].obrat+=r.obrat;byZak[r.firma].zisk+=r.zisk;byZak[r.firma].pocet++;
+  });
+  const totalAvgM=rows.reduce((s,r)=>s+r.zisk,0)/rows.reduce((s,r)=>s+r.obrat,0)*100;
+  const low=Object.values(byZak).filter(z=>z.obrat>5000&&z.pocet>=2).map(z=>({...z,marze:z.obrat>0?z.zisk/z.obrat*100:0}))
+    .filter(z=>z.marze<totalAvgM-5).sort((a,b)=>a.marze-b.marze).slice(0,15);
+
+  document.getElementById('tbl-low-marze-cust').innerHTML=`<thead><tr><th>#</th><th>Zákazník</th><th class="r">Marže</th><th class="r">Průměr</th><th class="r">Rozdíl</th><th class="r">Obrat</th></tr></thead>
+  <tbody>${low.map((z,i)=>`<tr>
+    <td><span class="rn">${i+1}</span></td>
+    <td><span class="trunc">${esc(z.name)}</span></td>
+    <td class="r red">${z.marze.toFixed(1)}%</td>
+    <td class="r dim">${totalAvgM.toFixed(1)}%</td>
+    <td class="r"><span class="pill pill-red">−${(totalAvgM-z.marze).toFixed(1)} pp</span></td>
+    <td class="r dim">${fkc(z.obrat)}</td>
+  </tr>`).join('')}</tbody>`;
+}
+
+// ── CHURN ZÁKAZNÍKŮ ───────────────────────────────────────
+function renderChurnZas(rows) {
+  // Počítej jen z aktuálně načtených dat - poslední datum v datech = referenční bod
+  const maxDate = rows.reduce((mx,r)=>r.datum>mx?r.datum:mx, new Date(0));
+  const byZak={};
+  rows.forEach(r=>{
+    if(!byZak[r.firma])byZak[r.firma]={name:r.firma,pocet:0,obrat:0,dates:[]};
+    byZak[r.firma].pocet++;byZak[r.firma].obrat+=r.obrat;byZak[r.firma].dates.push(r.datum);
+  });
+  const churn=Object.values(byZak).filter(z=>z.pocet>=2).map(z=>{
+    const sorted=z.dates.sort((a,b)=>a-b);
+    const last=sorted[sorted.length-1];
+    const daysSince=Math.round((maxDate-last)/86400000);
+    return{...z,last,daysSince};
+  }).filter(z=>z.daysSince>=45).sort((a,b)=>b.obrat-a.obrat).slice(0,15);
+
+  document.getElementById('tbl-churn-zas').innerHTML=`<thead><tr><th>#</th><th>Zákazník</th><th class="r">Poslední nákup</th><th class="r">Dní bez nákupu</th><th class="r">Celk. obrat</th></tr></thead>
+  <tbody>${churn.map((z,i)=>`<tr>
+    <td><span class="rn">${i+1}</span></td>
+    <td><span class="trunc">${esc(z.name)}</span></td>
+    <td class="r dim">${fd(z.last)}</td>
+    <td class="r"><span class="pill ${z.daysSince>=90?'pill-red':'pill-orange'}">${z.daysSince} dní</span></td>
+    <td class="r dim">${fkc(z.obrat)}</td>
+  </tr>`).join('')}</tbody>`;
+}
+
+// ── MARŽE ARTIKLU U RŮZNÝCH ZÁKAZNÍKŮ ────────────────────
+function renderMarzeSpread(rows) {
+  const byArtCust={};
+  rows.forEach(r=>{
+    const k=r.artikl;
+    if(!byArtCust[k])byArtCust[k]={kod:r.artikl,nazev:r.nazev,custs:{}};
+    if(!byArtCust[k].custs[r.firma])byArtCust[k].custs[r.firma]={o:0,z:0};
+    byArtCust[k].custs[r.firma].o+=r.obrat;
+    byArtCust[k].custs[r.firma].z+=r.zisk;
+  });
+  const spread=Object.values(byArtCust).filter(a=>Object.keys(a.custs).length>=2).map(a=>{
+    // Filtruj jen zákazníky s reálnou marží 0–100% a min. obrat 500 Kč
+    const marzes=Object.entries(a.custs)
+      .map(([f,d])=>({firma:f,marze:d.o>0?d.z/d.o*100:null,obrat:d.o}))
+      .filter(x=>x.marze!==null && x.marze>=0 && x.marze<=100 && x.obrat>=500);
+    if(marzes.length<2)return null;
+    marzes.sort((a,b)=>b.marze-a.marze);
+    const max=marzes[0],min=marzes[marzes.length-1];
+    const rozptyl=max.marze-min.marze;
+    if(rozptyl>80)return null; // přeskočit nereálné rozdíly
+    return{...a,max,min,rozptyl,custCount:marzes.length};
+  }).filter(Boolean).filter(a=>a.rozptyl>=3).sort((a,b)=>b.rozptyl-a.rozptyl).slice(0,15);
+
+  document.getElementById('tbl-marze-spread').innerHTML=`<thead><tr><th>#</th><th>Artikl</th><th class="r">Zákazníků</th><th class="r">Nejvyšší marže</th><th class="r">Nejnižší marže</th><th class="r">Rozptyl</th></tr></thead>
+  <tbody>${spread.map((a,i)=>`<tr>
+    <td><span class="rn">${i+1}</span></td>
+    <td><div style="font-size:10px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc">${esc(a.nazev)}</span></td>
+    <td class="r dim">${a.custCount}</td>
+    <td class="r green">${a.max.marze.toFixed(1)}% <span style="font-size:10px;color:var(--text3)">(${esc(a.max.firma)})</span></td>
+    <td class="r red">${a.min.marze.toFixed(1)}% <span style="font-size:10px;color:var(--text3)">(${esc(a.min.firma)})</span></td>
+    <td class="r"><span class="pill pill-orange">${a.rozptyl.toFixed(1)} pp</span></td>
+  </tr>`).join('')}</tbody>`;
+}
+
+// ── BASKET ANALÝZA ────────────────────────────────────────
+function renderBasket(rows) {
+  // Faktury → artikly na stejné faktuře
+  const byDoklad={};
+  rows.forEach(r=>{
+    if(!byDoklad[r.doklad])byDoklad[r.doklad]=[];
+    byDoklad[r.doklad].push(r.artikl);
+  });
+  const pairs={};
+  Object.values(byDoklad).forEach(arts=>{
+    const unique=[...new Set(arts)];
+    for(let i=0;i<unique.length;i++){
+      for(let j=i+1;j<unique.length;j++){
+        const k=[unique[i],unique[j]].sort().join('|||');
+        pairs[k]=(pairs[k]||0)+1;
+      }
+    }
+  });
+  const topPairs=Object.entries(pairs).filter(([,c])=>c>=2).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const artNames={};rows.forEach(r=>artNames[r.artikl]=r.nazev);
+
+  document.getElementById('tbl-basket').innerHTML=`<thead><tr><th>#</th><th>Artikl A</th><th>Artikl B</th><th class="r">Spolu prodáno</th></tr></thead>
+  <tbody>${topPairs.map(([pair,cnt],i)=>{
+    const [a,b]=pair.split('|||');
+    const nA=artNames[a]||a, nB=artNames[b]||b;
+    return`<tr>
+      <td><span class="rn">${i+1}</span></td>
+      <td><div style="font-size:10px;color:var(--text3)">${esc(a)}</div><span class="trunc">${esc(nA)}</span></td>
+      <td><div style="font-size:10px;color:var(--text3)">${esc(b)}</div><span class="trunc">${esc(nB)}</span></td>
+      <td class="r"><span class="pill pill-blue">${cnt}×</span></td>
+    </tr>`;
+  }).join('')}</tbody>`;
+}
+
+// ── PRŮMĚRNÁ DOBA MEZI NÁKUPY ARTIKLU ────────────────────
+function renderRepeatInterval(rows) {
+  const arts=gba(rows);
+  const results=Object.values(arts).filter(a=>a.pocet>=3).map(a=>{
+    const dates=allRows.filter(r=>r.artikl===a.kod).map(r=>r.datum).sort((a,b)=>a-b);
+    const intervals=[];
+    for(let i=1;i<dates.length;i++)intervals.push((dates[i]-dates[i-1])/86400000);
+    const avg=intervals.reduce((s,v)=>s+v,0)/intervals.length;
+    return{...a,avgInterval:avg,intervals:intervals.length};
+  }).filter(a=>a.avgInterval>0).sort((a,b)=>a.avgInterval-b.avgInterval).slice(0,15);
+
+  document.getElementById('tbl-repeat-interval').innerHTML=`<thead><tr><th>#</th><th>Artikl</th><th class="r">Ø interval</th><th class="r">Transakcí</th><th class="r">Obrat</th></tr></thead>
+  <tbody>${results.map((a,i)=>`<tr>
+    <td><span class="rn ${i<3?['rn1','rn2','rn3'][i]:''}">${i+1}</span></td>
+    <td><div style="font-size:10px;color:var(--text3)">${esc(a.kod)}</div><span class="trunc">${esc(a.nazev)}</span></td>
+    <td class="r"><span class="pill ${a.avgInterval<=14?'pill-green':a.avgInterval<=30?'pill-blue':a.avgInterval<=60?'pill-orange':'pill-gray'}">${Math.round(a.avgInterval)} dní</span></td>
+    <td class="r dim">${a.pocet}</td>
+    <td class="r dim">${fkc(a.obrat)}</td>
+  </tr>`).join('')}</tbody>`;
+}
+
+// ── ZÁKAZNÍCI — DOBA DO DRUHÉHO NÁKUPU ───────────────────
+function renderReturnTime(rows) {
+  const byZak={};
+  allRows.forEach(r=>{
+    if(!byZak[r.firma])byZak[r.firma]=[];
+    byZak[r.firma].push(r.datum);
+  });
+  const results=Object.entries(byZak).filter(([,d])=>d.length>=2).map(([firma,dates])=>{
+    const sorted=dates.sort((a,b)=>a-b);
+    const returnDays=Math.round((sorted[1]-sorted[0])/86400000);
+    const totalO=allRows.filter(r=>r.firma===firma).reduce((s,r)=>s+r.obrat,0);
+    return{firma,returnDays,pocet:dates.length,obrat:totalO};
+  }).filter(z=>z.returnDays>0).sort((a,b)=>a.returnDays-b.returnDays).slice(0,15);
+
+  document.getElementById('tbl-return-time').innerHTML=`<thead><tr><th>#</th><th>Zákazník</th><th class="r">1. → 2. nákup</th><th class="r">Celkem nákupů</th><th class="r">Obrat</th></tr></thead>
+  <tbody>${results.map((z,i)=>`<tr>
+    <td><span class="rn ${i<3?['rn1','rn2','rn3'][i]:''}">${i+1}</span></td>
+    <td><span class="trunc">${esc(z.firma)}</span></td>
+    <td class="r"><span class="pill ${z.returnDays<=7?'pill-green':z.returnDays<=30?'pill-blue':z.returnDays<=60?'pill-orange':'pill-gray'}">${z.returnDays} dní</span></td>
+    <td class="r dim">${z.pocet}</td>
+    <td class="r dim">${fkc(z.obrat)}</td>
+  </tr>`).join('')}</tbody>`;
+}
+
+// ── NEJVĚTŠÍ SKOKY OBRATU ─────────────────────────────────
+function renderJumps(rows) {
+  const mn=['Led','Úno','Bře','Dub','Kvě','Čer','Čvc','Srp','Zář','Říj','Lis','Pro'];
+  const byMonth={};
+  rows.forEach(r=>{
+    const k=r.datum.getFullYear()+'-'+String(r.datum.getMonth()+1).padStart(2,'0');
+    if(!byMonth[k])byMonth[k]={obrat:0,zisk:0,rok:r.datum.getFullYear(),mesic:r.datum.getMonth()};
+    byMonth[k].obrat+=r.obrat;byMonth[k].zisk+=r.zisk;
+  });
+  const keys=Object.keys(byMonth).sort();
+  const jumps=[];
+  for(let i=1;i<keys.length;i++){
+    const prev=byMonth[keys[i-1]],curr=byMonth[keys[i]];
+    const diff=curr.obrat-prev.obrat;
+    const pct=prev.obrat>0?diff/prev.obrat*100:0;
+    const label=mn[curr.mesic]+" "+curr.rok;
+    jumps.push({label,curr:curr.obrat,prev:prev.obrat,diff,pct});
+  }
+  jumps.sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct));
+  const top=jumps.slice(0,15);
+
+  document.getElementById('tbl-jumps').innerHTML=`<thead><tr><th>#</th><th>Měsíc</th><th class="r">Předchozí měsíc</th><th class="r">Tento měsíc</th><th class="r">Změna Kč</th><th class="r">Změna %</th></tr></thead>
+  <tbody>${top.map((j,i)=>`<tr>
+    <td><span class="rn">${i+1}</span></td>
+    <td class="bold">${j.label}</td>
+    <td class="r dim">${fkc(j.prev)}</td>
+    <td class="r dim">${fkc(j.curr)}</td>
+    <td class="r ${j.diff>=0?'green':'red'}">${j.diff>=0?'+':''}${fkc(j.diff)}</td>
+    <td class="r"><span class="pill ${j.pct>=0?'pill-green':'pill-red'}">${j.pct>=0?'+':''}${j.pct.toFixed(0)}%</span></td>
+  </tr>`).join('')}</tbody>`;
+}
+
+function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function fkc(n){if(!n&&n!==0)return'—';return(+n).toLocaleString('cs-CZ',{minimumFractionDigits:0,maximumFractionDigits:0})+' Kč';}
+function fks(n){if(n>=1000000)return(n/1000000).toFixed(1)+' M';if(n>=1000)return Math.round(n/1000)+' tis.';return Math.round(n)+'';}
+function fd(d){if(!d)return'—';return new Date(d).toLocaleDateString('cs-CZ',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,type='info'){const el=document.createElement('div');el.className=`toast t-${type}`;el.textContent=msg;document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3500);}
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f&&(f.name.endsWith('.xlsx')||f.name.endsWith('.xls')))handleFile(f);});
+</script>
+</body>
+</html>
