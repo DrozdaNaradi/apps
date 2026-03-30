@@ -19,6 +19,16 @@
       "filename": "upominky_6.html",
       "url": "https://drozdanaradi.github.io/apps/upominky_6.html",
       "updated": "2026-03-30"
+    },
+    {
+      "id": 3,
+      "name": "Zákaznická analytika",
+      "description": "Dashboard pro analýzu prodejních dat z Pohody s přehledem obratu, top zákazníků, platební morálky a sezónnosti",
+      "icon": "bar-chart-2",
+      "colorIndex": 0,
+      "filename": "analytika_6.html",
+      "url": "https://drozdanaradi.github.io/apps/analytika_6.html",
+      "updated": "2026-03-30"
     }
   ]
 }
