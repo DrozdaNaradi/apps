@@ -49,6 +49,16 @@
       "filename": "porovnavac-souboru.html",
       "url": "https://drozdanaradi.github.io/apps/porovnavac-souboru.html",
       "updated": "2026-03-30"
+    },
+    {
+      "id": 6,
+      "name": "Upomínky faktur",
+      "description": "Správa a automatické odeslání upomínek na faktury s emailovou komunikací",
+      "icon": "mail",
+      "colorIndex": 0,
+      "filename": "upominky_8.html",
+      "url": "https://drozdanaradi.github.io/apps/upominky_8.html",
+      "updated": "2026-03-30"
     }
   ]
 }
