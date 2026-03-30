@@ -9,6 +9,16 @@
       "filename": "dph-kalkulacka.html",
       "url": "https://drozdanaradi.github.io/apps/dph-kalkulacka.html",
       "updated": "2026-03-30"
+    },
+    {
+      "id": 2,
+      "name": "Upomínky faktur",
+      "description": "Aplikace pro správu a automatické rozesílání upomínek na nezaplacené faktury z účetního softwaru Pohoda",
+      "icon": "mail",
+      "colorIndex": 0,
+      "filename": "upominky_6.html",
+      "url": "https://drozdanaradi.github.io/apps/upominky_6.html",
+      "updated": "2026-03-30"
     }
   ]
 }
