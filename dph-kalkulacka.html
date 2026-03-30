@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DPH Kalkulačka</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0ede6;
+  --surface:#ffffff;
+  --surface2:#f7f5f0;
+  --border:#e4e0d6;
+  --text:#1c1a16;
+  --muted:#8a8880;
+  --muted2:#b5b3ae;
+  --accent:#1a5fb4;
+  --accent-soft:#e8f0fc;
+  --green:#2d6a4f;
+  --green-soft:#e8f5ee;
+  --amber:#92400e;
+  --amber-soft:#fef3c7;
+  --amber-border:#f59e0b;
+  --red:#991b1b;
+  --radius:16px;
+  --radius-sm:10px;
+  --radius-xs:8px;
+  --shadow:0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05);
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.05);
+}
+body{
+  font-family:'DM Sans',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* NAV */
+nav{
+  background:rgba(240,237,230,0.85);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 20px;
+  height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-icon{
+  width:32px;height:32px;background:var(--accent);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;color:white;font-size:16px;
+}
+.nav-title{font-size:16px;font-weight:600;letter-spacing:-0.3px}
+.nav-rates{display:flex;gap:6px}
+.rate-badge{
+  font-size:11px;font-weight:600;padding:3px 9px;
+  border-radius:20px;background:var(--surface2);
+  color:var(--muted);border:1px solid var(--border);
+  font-family:'DM Mono',monospace;
+}
+
+/* LAYOUT */
+main{max-width:440px;margin:0 auto;padding:24px 16px 80px}
+
+/* HERO RESULT */
+.hero-card{
+  background:var(--surface);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:28px 24px 24px;
+  margin-bottom:14px;
+  animation:fadeUp 0.4s ease both;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.hero-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
+.hero-amount{
+  font-size:48px;font-weight:300;letter-spacing:-2px;
+  color:var(--text);line-height:1;margin-bottom:4px;
+  font-variant-numeric:tabular-nums;
+  transition:all 0.2s ease;
+}
+.hero-amount span{font-size:22px;font-weight:400;color:var(--muted);margin-left:4px}
+.hero-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+
+/* INPUTS */
+.inputs-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.field label{
+  display:block;font-size:11px;font-weight:500;
+  color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;
+}
+.field input{
+  width:100%;font-size:18px;font-weight:500;
+  padding:12px 14px;
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--surface2);
+  color:var(--text);outline:none;
+  font-family:'DM Mono',monospace;
+  transition:border-color 0.15s,background 0.15s;
+  -webkit-appearance:none;-moz-appearance:textfield;
+}
+.field input::-webkit-outer-spin-button,.field input::-webkit-inner-spin-button{-webkit-appearance:none}
+.field input:focus{border-color:var(--accent);background:#fff}
+.field input::placeholder{color:var(--muted2);font-weight:400}
+
+/* DPH TOGGLE */
+.toggle-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.toggle{
+  display:flex;background:var(--surface2);
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:3px;gap:3px;
+}
+.toggle button{
+  flex:1;padding:8px 6px;font-size:13px;font-weight:500;
+  border:none;background:transparent;color:var(--muted);
+  cursor:pointer;border-radius:7px;
+  font-family:'DM Mono',monospace;
+  transition:background 0.15s,color 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.toggle button.active{
+  background:var(--accent);color:#fff;
+  box-shadow:0 1px 4px rgba(26,95,180,0.3);
+}
+
+/* DIVIDER */
+.divider{border:none;border-top:1px solid var(--border);margin:18px 0}
+
+/* RESULT ROWS */
+.result-rows{display:flex;flex-direction:column;gap:0}
+.result-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.result-row:last-child{border-bottom:none}
+.result-row .lbl{font-size:13px;color:var(--muted)}
+.result-row .val{
+  font-size:15px;font-weight:600;
+  font-family:'DM Mono',monospace;
+  font-variant-numeric:tabular-nums;
+}
+.result-row.accent .val{color:var(--accent)}
+.result-row.green .val{color:var(--green)}
+
+/* CARD */
+.card{
+  background:var(--surface);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:20px;
+  margin-bottom:14px;
+  animation:fadeUp 0.4s ease both;
+}
+.card-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:16px;
+}
+.card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px}
+
+/* SLEVA CHIPS */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{
+  padding:6px 14px;font-size:13px;font-weight:500;
+  border:1.5px solid var(--border);border-radius:20px;
+  background:transparent;color:var(--muted);
+  cursor:pointer;transition:all 0.15s;
+  -webkit-tap-highlight-color:transparent;
+  font-family:'DM Sans',sans-serif;
+}
+.chip:hover{border-color:var(--amber-border);color:var(--amber)}
+.chip.active{
+  background:var(--amber-soft);color:var(--amber);
+  border-color:var(--amber-border);font-weight:600;
+}
+.custom-inp{
+  width:90px;font-size:13px;padding:6px 12px;
+  border:1.5px solid var(--border);border-radius:20px;
+  background:transparent;color:var(--text);outline:none;
+  -webkit-appearance:none;-moz-appearance:textfield;
+  text-align:center;font-family:'DM Sans',sans-serif;
+  transition:border-color 0.15s;
+}
+.custom-inp::-webkit-outer-spin-button,.custom-inp::-webkit-inner-spin-button{-webkit-appearance:none}
+.custom-inp:focus{border-color:var(--amber-border)}
+.custom-inp::placeholder{color:var(--muted2)}
+
+/* SLEVA METRICS */
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{
+  background:var(--surface2);border-radius:var(--radius-xs);
+  padding:12px 14px;
+}
+.metric .m-label{font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:500;letter-spacing:0.3px}
+.metric .m-val{
+  font-size:16px;font-weight:600;color:var(--text);
+  font-family:'DM Mono',monospace;font-variant-numeric:tabular-nums;
+}
+.metric.positive .m-val{color:var(--green)}
+.metric.negative .m-val{color:var(--red)}
+
+/* HISTORY */
+.hist-list{list-style:none;max-height:240px;overflow-y:auto}
+.hist-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:opacity 0.1s;
+}
+.hist-item:last-child{border-bottom:none}
+.hist-item:hover{opacity:0.7}
+.hist-dph{
+  font-size:11px;font-weight:600;padding:3px 9px;
+  background:var(--accent-soft);color:var(--accent);
+  border-radius:20px;font-family:'DM Mono',monospace;
+  flex-shrink:0;
+}
+.hist-nums{text-align:right;line-height:1.7}
+.hist-nums .hn-bez{font-size:12px;color:var(--muted)}
+.hist-nums .hn-s{font-size:14px;font-weight:600;font-family:'DM Mono',monospace}
+.clear-btn{
+  font-size:12px;color:var(--red);background:none;
+  border:none;cursor:pointer;font-family:'DM Sans',sans-serif;
+  font-weight:500;padding:0;
+}
+.clear-btn:hover{opacity:0.7}
+
+/* EMPTY STATE */
+.empty{
+  text-align:center;padding:32px 0 8px;
+  color:var(--muted2);font-size:14px;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <div class="nav-icon">%</div>
+    <div class="nav-title">DPH Kalkulačka</div>
+  </div>
+  <div class="nav-rates">
+    <span class="rate-badge">21%</span>
+    <span class="rate-badge">15%</span>
+    <span class="rate-badge">12%</span>
+  </div>
+</nav>
+
+<main>
+
+  <!-- HERO CARD -->
+  <div class="hero-card">
+
+    <!-- Big number output -->
+    <div id="hero-section" style="display:none;margin-bottom:20px">
+      <div class="hero-label">Cena s DPH</div>
+      <div class="hero-amount" id="hero-num">0,00 <span>Kč</span></div>
+      <div class="hero-sub" id="hero-sub">—</div>
+      <hr class="divider" style="margin-top:0">
+    </div>
+
+    <!-- Inputs -->
+    <div class="toggle-label">Sazba DPH</div>
+    <div class="toggle" style="margin-bottom:16px">
+      <button id="dph21" class="active" onclick="setDph(21)">21 %</button>
+      <button id="dph15" onclick="setDph(15)">15 %</button>
+      <button id="dph12" onclick="setDph(12)">12 %</button>
+      <button id="dph0" onclick="setDph(0)">0 %</button>
+    </div>
+
+    <div class="inputs-row">
+      <div class="field">
+        <label>Bez DPH</label>
+        <input type="number" id="inp-bez" placeholder="0.00" step="0.01" min="0" inputmode="decimal" oninput="fromBez()">
+      </div>
+      <div class="field">
+        <label>S DPH</label>
+        <input type="number" id="inp-sdph" placeholder="0.00" step="0.01" min="0" inputmode="decimal" oninput="fromSdph()">
+      </div>
+    </div>
+
+    <!-- Result rows -->
+    <div id="results-block" style="display:none">
+      <hr class="divider">
+      <div class="result-rows">
+        <div class="result-row accent">
+          <span class="lbl">Bez DPH</span>
+          <span class="val" id="r-bez">—</span>
+        </div>
+        <div class="result-row">
+          <span class="lbl">DPH (<span id="r-pct">21</span> %)</span>
+          <span class="val" id="r-dphkc">—</span>
+        </div>
+        <div class="result-row green">
+          <span class="lbl">S DPH</span>
+          <span class="val" id="r-sdph">—</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SLEVA CARD -->
+  <div class="card" id="sleva-card" style="display:none;animation-delay:0.05s">
+    <div class="card-header">
+      <div class="card-title">Sleva</div>
+    </div>
+    <div class="chips">
+      <button class="chip" onclick="setSleva(5)">5 %</button>
+      <button class="chip" onclick="setSleva(10)">10 %</button>
+      <button class="chip" onclick="setSleva(15)">15 %</button>
+      <button class="chip" onclick="setSleva(20)">20 %</button>
+      <button class="chip" onclick="setSleva(25)">25 %</button>
+      <button class="chip" onclick="setSleva(30)">30 %</button>
+      <input type="number" class="custom-inp" id="sleva-custom" placeholder="vlastní %" step="1" min="0" max="100" inputmode="numeric" oninput="customSleva()">
+    </div>
+    <div class="metrics-grid">
+      <div class="metric negative">
+        <div class="m-label">Sleva bez DPH</div>
+        <div class="m-val" id="s-bez">—</div>
+      </div>
+      <div class="metric positive">
+        <div class="m-label">Po slevě bez DPH</div>
+        <div class="m-val" id="s-cena-bez">—</div>
+      </div>
+      <div class="metric negative">
+        <div class="m-label">Sleva s DPH</div>
+        <div class="m-val" id="s-sdph">—</div>
+      </div>
+      <div class="metric positive">
+        <div class="m-label">Po slevě s DPH</div>
+        <div class="m-val" id="s-cena-sdph">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY CARD -->
+  <div class="card" id="hist-card" style="display:none;animation-delay:0.1s">
+    <div class="card-header">
+      <div class="card-title">Historie</div>
+      <button class="clear-btn" onclick="clearHist()">Smazat vše</button>
+    </div>
+    <ul class="hist-list" id="hist-list"></ul>
+  </div>
+
+</main>
+
+<script>
+let dph=21, activeSleva=0, history=[], lastKey='';
+let bez=null, sdph=null;
+
+function fmt(n){
+  return n.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2})+' Kč';
+}
+function fmtHero(n){
+  return n.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function setDph(v){
+  dph=v;
+  ['21','15','12','0'].forEach(x=>document.getElementById('dph'+x).classList.remove('active'));
+  document.getElementById('dph'+v).classList.add('active');
+  document.getElementById('r-pct').textContent=v;
+  if(bez!==null) fromBezVal(bez);
+  else if(sdph!==null) fromSdphVal(sdph);
+}
+
+function fromBez(){
+  const v=parseFloat(document.getElementById('inp-bez').value);
+  if(isNaN(v)||v<0){clearResults();return;}
+  fromBezVal(v);
+}
+function fromBezVal(v){
+  bez=v; sdph=v*(1+dph/100);
+  document.getElementById('inp-sdph').value=sdph.toFixed(2);
+  showResults(bez,sdph);
+}
+
+function fromSdph(){
+  const v=parseFloat(document.getElementById('inp-sdph').value);
+  if(isNaN(v)||v<0){clearResults();return;}
+  fromSdphVal(v);
+}
+function fromSdphVal(v){
+  sdph=v; bez=v/(1+dph/100);
+  document.getElementById('inp-bez').value=bez.toFixed(2);
+  showResults(bez,sdph);
+}
+
+function showResults(b,s){
+  const dphKc=s-b;
+  // Hero
+  document.getElementById('hero-num').innerHTML=fmtHero(s)+' <span>Kč</span>';
+  document.getElementById('hero-sub').textContent='Bez DPH: '+fmt(b)+' · DPH '+dph+' %: '+fmt(dphKc);
+  document.getElementById('hero-section').style.display='block';
+  // Rows
+  document.getElementById('r-bez').textContent=fmt(b);
+  document.getElementById('r-dphkc').textContent=fmt(dphKc);
+  document.getElementById('r-sdph').textContent=fmt(s);
+  document.getElementById('results-block').style.display='block';
+  document.getElementById('sleva-card').style.display='block';
+  calcSleva(b,s);
+  saveHist(b,s);
+}
+
+function clearResults(){
+  bez=null; sdph=null;
+  document.getElementById('results-block').style.display='none';
+  document.getElementById('sleva-card').style.display='none';
+  document.getElementById('hero-section').style.display='none';
+}
+
+function setSleva(v){
+  activeSleva=v;
+  document.getElementById('sleva-custom').value=v;
+  document.querySelectorAll('.chip').forEach(b=>b.classList.toggle('active',parseInt(b.textContent)===v));
+  if(bez!==null) calcSleva(bez,sdph);
+}
+function customSleva(){
+  activeSleva=parseFloat(document.getElementById('sleva-custom').value)||0;
+  document.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+  if(bez!==null) calcSleva(bez,sdph);
+}
+function calcSleva(b,s){
+  if(!activeSleva){
+    ['s-bez','s-cena-bez','s-sdph','s-cena-sdph'].forEach(id=>document.getElementById(id).textContent='—');
+    return;
+  }
+  const sl=activeSleva/100;
+  document.getElementById('s-bez').textContent=fmt(b*sl);
+  document.getElementById('s-cena-bez').textContent=fmt(b*(1-sl));
+  document.getElementById('s-sdph').textContent=fmt(s*sl);
+  document.getElementById('s-cena-sdph').textContent=fmt(s*(1-sl));
+}
+
+function saveHist(b,s){
+  const key=b.toFixed(2)+'|'+s.toFixed(2)+'|'+dph;
+  if(key===lastKey) return;
+  lastKey=key;
+  history.unshift({b,s,dph});
+  if(history.length>30) history.pop();
+  renderHist();
+}
+function renderHist(){
+  const card=document.getElementById('hist-card');
+  if(!history.length){card.style.display='none';return;}
+  card.style.display='block';
+  document.getElementById('hist-list').innerHTML=history.map((h,i)=>`
+    <li class="hist-item" onclick="loadHist(${i})">
+      <span class="hist-dph">DPH ${h.dph} %</span>
+      <div class="hist-nums">
+        <div class="hn-bez">bez: ${h.b.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2})} Kč</div>
+        <div class="hn-s">${h.s.toLocaleString('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2})} Kč</div>
+      </div>
+    </li>`).join('');
+}
+function loadHist(i){
+  const h=history[i];
+  setDph(h.dph);
+  document.getElementById('inp-bez').value=h.b.toFixed(2);
+  fromBezVal(h.b);
+}
+function clearHist(){history=[];lastKey='';renderHist();}
+</script>
+</body>
+</html>
