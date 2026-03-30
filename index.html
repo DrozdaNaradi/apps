@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nástroje — Drozda Nářadí</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:      #F7F7F8;
+      --card:    #FFFFFF;
+      --b1:      #E8E8EC;
+      --b2:      #F0F0F3;
+      --t1:      #111111;
+      --t2:      #888888;
+      --t3:      #BBBBBB;
+      --acc:     #D40000;
+      --r:       6px;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: flex; }
+
+    /* ── AUTH ─────────────────────────────────────────────── */
+    #loginScreen, #setupScreen {
+      align-items: center; justify-content: center;
+      min-height: 100vh; padding: 24px;
+    }
+
+    .auth-card {
+      background: var(--card);
+      border: 1px solid var(--b1);
+      border-radius: 10px;
+      padding: 44px 40px;
+      width: 100%; max-width: 380px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    }
+
+    .brand-row {
+      display: flex; align-items: center; gap: 9px;
+      margin-bottom: 32px;
+    }
+
+    .brand-dot {
+      width: 8px; height: 8px;
+      background: var(--acc); border-radius: 50%;
+    }
+
+    .brand-name { font-size: 13px; font-weight: 600; color: var(--t2); letter-spacing: 0.2px; }
+
+    .auth-h { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 4px; }
+    .auth-s { font-size: 13px; color: var(--t2); margin-bottom: 28px; }
+
+    .fg { margin-bottom: 14px; }
+    .fl { display: block; font-size: 11px; font-weight: 500; color: var(--t2); margin-bottom: 5px; letter-spacing: 0.2px; }
+    .fh { font-size: 11px; color: var(--t3); margin-top: 4px; }
+
+    input[type="text"], input[type="password"], textarea {
+      width: 100%; padding: 9px 12px;
+      border: 1px solid var(--b1); border-radius: var(--r);
+      font-size: 13px; font-family: inherit;
+      color: var(--t1); background: var(--bg); outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus { border-color: var(--t1); background: #fff; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+      font-family: inherit; font-weight: 500; border: none;
+      border-radius: var(--r); cursor: pointer; transition: all 0.15s;
+      text-decoration: none; white-space: nowrap;
+    }
+    .btn-blk      { background: var(--t1); color: #fff; font-size: 13px; padding: 9px 18px; }
+    .btn-blk:hover { background: #333; }
+    .btn-full     { width: 100%; padding: 10px; margin-top: 8px; }
+    .btn-sm       { background: var(--t1); color: #fff; font-size: 12px; padding: 6px 14px; border-radius: 5px; }
+    .btn-sm:hover { background: #333; }
+    .btn-ghost    { background: transparent; color: var(--t2); border: 1px solid var(--b1); font-size: 12px; padding: 6px 12px; }
+    .btn-ghost:hover { border-color: var(--t2); color: var(--t1); }
+    .btn-sq {
+      width: 30px; height: 30px;
+      background: transparent; border: 1px solid var(--b1); border-radius: var(--r);
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--t2); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-sq:hover { border-color: var(--t2); color: var(--t1); }
+
+    .err { font-size: 12px; color: var(--acc); margin-top: 10px; min-height: 16px; }
+
+    /* ── SHELL ────────────────────────────────────────────── */
+    #appScreen { flex-direction: column; min-height: 100vh; }
+
+    /* ── HEADER ───────────────────────────────────────────── */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--b1);
+      height: 52px; padding: 0 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .h-left { display: flex; align-items: center; gap: 8px; }
+    .h-dot  { width: 8px; height: 8px; background: var(--acc); border-radius: 50%; }
+    .h-name { font-size: 13px; font-weight: 600; letter-spacing: 0.1px; }
+    .h-pipe { width: 1px; height: 14px; background: var(--b1); margin: 0 6px; }
+    .h-sub  { font-size: 12px; color: var(--t3); }
+
+    .h-right { display: flex; align-items: center; gap: 8px; }
+
+    .btn-add-hd {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 14px;
+      background: var(--t1); color: #fff;
+      border: none; border-radius: var(--r);
+      font-size: 12px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-add-hd:hover { background: #333; }
+
+    /* ── MAIN ─────────────────────────────────────────────── */
+    main {
+      max-width: 1100px; margin: 0 auto;
+      padding: 28px 28px 60px;
+      flex: 1;
+    }
+
+    /* ── STAT CARDS ───────────────────────────────────────── */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--b1);
+      border-radius: var(--r);
+      padding: 18px 20px 16px;
+      position: relative; overflow: hidden;
+    }
+
+    .stat-label {
+      font-size: 11px; font-weight: 500; color: var(--t2);
+      margin-bottom: 10px; letter-spacing: 0.1px;
+    }
+
+    .stat-val {
+      font-size: 26px; font-weight: 700; letter-spacing: -0.8px;
+      line-height: 1; margin-bottom: 6px; color: var(--t1);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .stat-sub {
+      font-size: 11px; color: var(--t3); margin-bottom: 14px;
+    }
+
+    .stat-bar-wrap {
+      height: 3px; background: var(--b2); border-radius: 2px; overflow: hidden;
+    }
+
+    .stat-bar-fill {
+      height: 100%; border-radius: 2px; background: var(--t1);
+      transition: width 0.6s ease;
+    }
+
+    /* ── PANEL ────────────────────────────────────────────── */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--b1);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--b1);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .panel-title { font-size: 13px; font-weight: 600; }
+
+    .panel-count {
+      font-size: 11px; color: var(--t2);
+      background: var(--b2); padding: 2px 8px; border-radius: 20px;
+    }
+
+    /* ── APP ROWS ─────────────────────────────────────────── */
+    .app-row {
+      display: grid;
+      grid-template-columns: 40px 44px 1fr auto auto;
+      align-items: center;
+      gap: 0;
+      padding: 0 20px;
+      height: 56px;
+      border-bottom: 1px solid var(--b2);
+      transition: background 0.12s;
+      cursor: default;
+    }
+
+    .app-row:last-child { border-bottom: none; }
+    .app-row:hover { background: var(--bg); }
+
+    .row-num {
+      font-size: 11px; color: var(--t3);
+      font-family: 'DM Mono', monospace; font-weight: 400;
+    }
+
+    .row-icon {
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .row-info { padding: 0 16px 0 12px; min-width: 0; }
+
+    .row-name {
+      font-size: 13px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 1px;
+    }
+
+    .row-desc {
+      font-size: 11px; color: var(--t2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .row-date {
+      font-size: 11px; color: var(--t3);
+      font-family: 'DM Mono', monospace;
+      min-width: 80px; text-align: right; padding-right: 20px;
+    }
+
+    .row-action { flex-shrink: 0; }
+
+    /* ── EMPTY ────────────────────────────────────────────── */
+    .empty-row {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 64px 24px; text-align: center;
+      color: var(--t2);
+    }
+
+    .empty-row h4 { font-size: 14px; font-weight: 600; color: var(--t1); margin-bottom: 4px; }
+    .empty-row p  { font-size: 12px; }
+
+    /* ── OVERLAY ─────────────────────────────────────────── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(17,17,17,0.4);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 1000; align-items: center; justify-content: center; padding: 24px;
+    }
+    .overlay.open { display: flex; }
+
+    /* ── MODAL ───────────────────────────────────────────── */
+    .modal {
+      background: var(--card); border: 1px solid var(--b1);
+      border-radius: 10px; width: 100%; max-width: 460px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.18); overflow: hidden;
+    }
+
+    .modal-h {
+      padding: 16px 20px; border-bottom: 1px solid var(--b1);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-t { font-size: 14px; font-weight: 600; }
+    .modal-x {
+      width: 22px; height: 22px; background: var(--b2);
+      border: none; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; color: var(--t2);
+    }
+    .modal-x:hover { background: var(--b1); }
+    .modal-b { padding: 20px; }
+    .modal-f { padding: 14px 20px; border-top: 1px solid var(--b1); display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* ── DROPZONE ─────────────────────────────────────────── */
+    .dz {
+      border: 1px dashed var(--b1); border-radius: var(--r);
+      padding: 48px 24px; text-align: center; cursor: pointer;
+      color: var(--t2); transition: all 0.15s;
+    }
+    .dz:hover, .dz.over { border-color: var(--t1); background: var(--b2); color: var(--t1); }
+    .dz h4 { font-size: 13px; font-weight: 600; margin: 10px 0 3px; }
+    .dz p  { font-size: 12px; color: var(--t3); }
+
+    /* ── STATES ─────────────────────────────────────────────  */
+    .sc { text-align: center; padding: 52px 24px; }
+    .spin {
+      width: 28px; height: 28px; border: 2px solid var(--b1);
+      border-top-color: var(--t1); border-radius: 50%;
+      animation: rot 0.7s linear infinite; margin: 0 auto 14px;
+    }
+    @keyframes rot { to { transform: rotate(360deg); } }
+    .sc h4 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .sc p  { font-size: 12px; color: var(--t2); }
+
+    /* ── ICON PREVIEW ────────────────────────────────────── */
+    .iprev {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--b2); border-radius: var(--r);
+      padding: 11px 13px;
+    }
+    .iprev-box { width: 34px; height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .iprev-n { font-size: 12px; font-weight: 600; }
+    .iprev-s { font-size: 11px; color: var(--t3); margin-top: 1px; }
+
+    /* ── SETTINGS ──────────────────────────────────────────── */
+    .ss { margin-bottom: 18px; }
+    .st { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--t2); margin-bottom: 7px; }
+    .sr { display: flex; gap: 8px; align-items: center; }
+    .sr input { flex: 1; }
+
+    /* ── TOAST ───────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 20px; left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: var(--t1); color: #fff;
+      padding: 8px 16px 9px; border-radius: 20px;
+      font-size: 12px; font-weight: 500; z-index: 9999;
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none; white-space: nowrap;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.ok   { background: #1A8A3A; }
+    .toast.err  { background: var(--acc); }
+
+    @media (max-width: 768px) {
+      .stat-row { grid-template-columns: repeat(2,1fr); }
+      header, main { padding-left: 16px; padding-right: 16px; }
+      .h-pipe, .h-sub { display: none; }
+    }
+
+    @media (max-width: 520px) {
+      .row-date { display: none; }
+      .stat-row { grid-template-columns: repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="screen active" id="loginScreen"
+     style="align-items:center;justify-content:center;min-height:100vh;padding:24px">
+  <div class="auth-card">
+    <div class="brand-row">
+      <div class="brand-dot"></div>
+      <span class="brand-name">Drozda Nářadí</span>
+    </div>
+    <div class="auth-h">Přihlášení</div>
+    <div class="auth-s">Interní systém nástrojů a aplikací</div>
+    <input type="password" id="loginPwd" placeholder="Heslo"
+           autocomplete="current-password"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-blk btn-full" onclick="doLogin()">Přihlásit se</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div class="screen" id="setupScreen"
+     style="align-items:center;justify-content:center;min-height:100vh;padding:24px">
+  <div class="auth-card" style="max-width:420px">
+    <div class="brand-row">
+      <div class="brand-dot"></div>
+      <span class="brand-name">Drozda Nářadí</span>
+    </div>
+    <div class="auth-h">Prvotní nastavení</div>
+    <div class="auth-s">Stačí nastavit jednou — příště jen heslo</div>
+    <div class="fg">
+      <label class="fl">GitHub Personal Access Token</label>
+      <input type="password" id="setupGhToken" placeholder="ghp_xxxxxxxxxxxx">
+      <div class="fh">Oprávnění: Contents → Read &amp; Write</div>
+    </div>
+    <div class="fg">
+      <label class="fl">Claude API klíč</label>
+      <input type="password" id="setupClaudeKey" placeholder="sk-ant-xxxxxxxxxxxx">
+    </div>
+    <div class="fg">
+      <label class="fl">Heslo</label>
+      <input type="password" id="setupPwd" placeholder="Zvol heslo" style="margin-bottom:8px">
+      <input type="password" id="setupPwd2" placeholder="Heslo znovu">
+    </div>
+    <button class="btn btn-blk btn-full" onclick="doSetup()">Uložit a spustit</button>
+    <div class="err" id="setupErr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="appScreen" style="flex-direction:column;min-height:100vh">
+
+  <header>
+    <div class="h-left">
+      <div class="h-dot"></div>
+      <span class="h-name">Nástroje Drozda</span>
+      <div class="h-pipe"></div>
+      <span class="h-sub">Interní systém</span>
+    </div>
+    <div class="h-right">
+      <button class="btn-sq" onclick="doRefresh()" title="Obnovit">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </button>
+      <button class="btn-sq" onclick="openSettings()" title="Nastavení">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+          <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+          <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>
+          <line x1="17" y1="16" x2="23" y2="16"/>
+        </svg>
+      </button>
+      <button class="btn-add-hd" onclick="openUpload()">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Přidat aplikaci
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- STAT CARDS -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">Celkem nástrojů</div>
+        <div class="stat-val" id="statTotal">—</div>
+        <div class="stat-sub">aktivní aplikace</div>
+        <div class="stat-bar-wrap"><div class="stat-bar-fill" id="barTotal" style="width:0%"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Poslední přidání</div>
+        <div class="stat-val" style="font-size:16px;padding-top:5px" id="statLast">—</div>
+        <div class="stat-sub" id="statLastName">žádná aplikace</div>
+        <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:60%"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Repozitář</div>
+        <div class="stat-val" style="font-size:15px;padding-top:5px">apps</div>
+        <div class="stat-sub">drozdanaradi.github.io</div>
+        <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:100%"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Platforma</div>
+        <div class="stat-val" style="font-size:15px;padding-top:5px">GitHub</div>
+        <div class="stat-sub">Pages · branch main</div>
+        <div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:80%"></div></div>
+      </div>
+    </div>
+
+    <!-- APP LIST PANEL -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Přehled nástrojů</span>
+        <span class="panel-count" id="panelCount">—</span>
+      </div>
+      <div id="appsList"></div>
+    </div>
+  </main>
+
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="overlay" id="uOverlay">
+  <div class="modal">
+    <div class="modal-h">
+      <span class="modal-t">Přidat novou aplikaci</span>
+      <button class="modal-x" onclick="closeUpload()">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-b" id="uBody"></div>
+    <div class="modal-f" id="uFoot"></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="overlay" id="sOverlay">
+  <div class="modal">
+    <div class="modal-h">
+      <span class="modal-t">Nastavení</span>
+      <button class="modal-x" onclick="closeSettings()">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-b">
+      <div class="ss">
+        <div class="st">GitHub Personal Access Token</div>
+        <div class="sr"><input type="password" id="sGh" placeholder="ghp_xxxxxxxxxxxx">
+          <button class="btn btn-ghost" onclick="saveGh()">Uložit</button></div>
+      </div>
+      <div class="ss">
+        <div class="st">Claude API klíč</div>
+        <div class="sr"><input type="password" id="sCl" placeholder="sk-ant-xxxxxxxxxxxx">
+          <button class="btn btn-ghost" onclick="saveCl()">Uložit</button></div>
+      </div>
+      <div class="ss">
+        <div class="st">Změna hesla</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input type="password" id="sP1" placeholder="Nové heslo">
+          <input type="password" id="sP2" placeholder="Nové heslo znovu">
+          <button class="btn btn-blk" style="margin-top:2px" onclick="changePwd()">Změnit heslo</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="doLogout()">Odhlásit se</button>
+      <button class="btn btn-blk" onclick="closeSettings()">Hotovo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GH_OWNER='drozdanaradi',GH_REPO='apps',GH_BRANCH='main';
+const BASE_URL=`https://${GH_OWNER}.github.io/${GH_REPO}`;
+
+// Icon colors — subtle, matches dashboard palette
+const PAL=[
+  {bg:'#EEF4FF',fg:'#3B6FD4'},  // blue
+  {bg:'#F0FAF4',fg:'#2E8B57'},  // green
+  {bg:'#FFF6EE',fg:'#C97316'},  // orange
+  {bg:'#F5F0FF',fg:'#7C4FBF'},  // purple
+  {bg:'#EEF9F9',fg:'#2A9D8F'},  // teal
+  {bg:'#FFF0F0',fg:'#C43333'},  // red
+];
+
+const ICONS=[
+  'bell','bar-chart-2','package','file-text','tag','layout-dashboard',
+  'search','printer','image','mail','shopping-cart','truck','users',
+  'calendar','clipboard-list','database','cpu','zap','wrench','star',
+  'layers','grid','box','archive','book','briefcase','calculator',
+  'camera','check-square','clock','code','dollar-sign','edit','eye',
+  'filter','folder','globe','key','list','lock','map','monitor',
+  'percent','phone','pie-chart','save','send','shield','sliders',
+  'smartphone','table','target','terminal','trending-up','upload',
+  'user','tool','refresh-cw','hash'
+];
+
+const el=id=>document.getElementById(id);
+const ls=(k,v)=>{if(v!==undefined){localStorage.setItem(k,v);return v;}return localStorage.getItem(k);};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+async function hashPwd(p){
+  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(p+'drozdanaradi-2024'));
+  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+// ─ AUTH ─
+async function doLogin(){
+  const p=el('loginPwd').value;if(!p)return;
+  if(await hashPwd(p)===ls('app_password')){ls('session',Date.now()+'');showApp();}
+  else el('loginErr').textContent='Nesprávné heslo.';
+}
+
+async function doSetup(){
+  const gh=el('setupGhToken').value.trim(),cl=el('setupClaudeKey').value.trim();
+  const p1=el('setupPwd').value,p2=el('setupPwd2').value,err=el('setupErr');
+  if(!gh||!cl||!p1){err.textContent='Vyplň všechna pole.';return;}
+  if(p1!==p2){err.textContent='Hesla se neshodují.';return;}
+  ls('gh_token',gh);ls('claude_key',cl);
+  ls('app_password',await hashPwd(p1));ls('session',Date.now()+'');
+  showApp();
+}
+
+async function changePwd(){
+  const p1=el('sP1').value,p2=el('sP2').value;
+  if(!p1||p1!==p2){toast('Hesla se neshodují','err');return;}
+  ls('app_password',await hashPwd(p1));
+  el('sP1').value=el('sP2').value='';toast('Heslo změněno','ok');
+}
+
+function doLogout(){
+  localStorage.removeItem('session');closeSettings();
+  el('appScreen').classList.remove('active');el('appScreen').style.display='none';
+  el('loginScreen').style.display='flex';el('loginScreen').classList.add('active');
+}
+
+function saveGh(){const v=el('sGh').value.trim();if(v){ls('gh_token',v);el('sGh').value='';toast('GitHub token uložen','ok');}}
+function saveCl(){const v=el('sCl').value.trim();if(v){ls('claude_key',v);el('sCl').value='';toast('Claude API klíč uložen','ok');}}
+
+// ─ GITHUB ─
+const b64e=s=>btoa(unescape(encodeURIComponent(s)));
+const b64d=s=>decodeURIComponent(escape(atob(s.replace(/\n/g,''))));
+
+async function ghReq(path,method='GET',body=null){
+  const opts={method,headers:{
+    'Authorization':`token ${ls('gh_token')}`,
+    'Accept':'application/vnd.github.v3+json',
+    'Content-Type':'application/json'
+  }};
+  if(body)opts.body=JSON.stringify(body);
+  return fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`,opts);
+}
+
+async function getApps(){
+  const r=await ghReq('apps.json');
+  if(r.status===404)return{data:{apps:[]},sha:null};
+  if(!r.ok)throw new Error('Chyba čtení apps.json');
+  const f=await r.json();
+  return{data:JSON.parse(b64d(f.content)),sha:f.sha};
+}
+
+async function putApps(data,sha,msg){
+  const body={message:msg,content:b64e(JSON.stringify(data,null,2)),branch:GH_BRANCH};
+  if(sha)body.sha=sha;
+  const r=await ghReq('apps.json','PUT',body);
+  if(!r.ok){const e=await r.json();throw new Error(e.message||'Chyba zápisu');}
+}
+
+async function putFile(filename,content,msg){
+  let sha=null;
+  const chk=await ghReq(filename);if(chk.ok)sha=(await chk.json()).sha;
+  const body={message:msg,content:b64e(content),branch:GH_BRANCH};
+  if(sha)body.sha=sha;
+  const r=await ghReq(filename,'PUT',body);
+  if(!r.ok){const e=await r.json();throw new Error(e.message||'Chyba nahrávání');}
+}
+
+// ─ CLAUDE ─
+async function analyzeApp(html,filename){
+  const trunc=html.length>14000?html.slice(0,14000)+'\n...[zkráceno]':html;
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':ls('claude_key'),
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-haiku-4-5-20251001',max_tokens:300,
+      messages:[{role:'user',content:`Analyzuj tuto HTML aplikaci. Vrať VÝHRADNĚ JSON bez backticks.\n\nSoubor: ${filename}\n---\n${trunc}\n---\n\n{"name":"krátký název česky max 36 znaků","description":"co dělá, max 90 znaků česky bez tečky","icon":"JEDNO jméno z: ${ICONS.join(', ')}","colorIndex":číslo 0-5}`}]
+    })
+  });
+  if(!r.ok)throw new Error('Claude API selhalo');
+  const d=await r.json();
+  return JSON.parse(d.content[0].text.replace(/```json|```/g,'').trim());
+}
+
+// ─ RENDER ─
+function fmtDate(s){
+  if(!s)return'—';
+  const d=new Date(s);
+  return d.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'});
+}
+
+function rowHTML(app,idx){
+  const p=PAL[app.colorIndex%PAL.length];
+  const url=app.url||`${BASE_URL}/${app.filename}`;
+  return`<div class="app-row">
+  <span class="row-num">${String(app.id).padStart(2,'0')}</span>
+  <div class="row-icon" style="background:${p.bg}">
+    <i data-lucide="${app.icon||'box'}" style="width:15px;height:15px;color:${p.fg};stroke-width:2"></i>
+  </div>
+  <div class="row-info">
+    <div class="row-name">${esc(app.name)}</div>
+    <div class="row-desc">${esc(app.description)}</div>
+  </div>
+  <span class="row-date">${fmtDate(app.updated)}</span>
+  <div class="row-action">
+    <a href="${url}" target="_blank" class="btn btn-sm">Otevřít ↗</a>
+  </div>
+</div>`;
+}
+
+function emptyHTML(){
+  return`<div class="empty-row">
+    <h4>Zatím žádné nástroje</h4>
+    <p>Klikni na „Přidat aplikaci" a nahraj první HTML soubor</p>
+  </div>`;
+}
+
+async function doRefresh(){
+  el('statTotal').textContent='—';
+  try{
+    const{data}=await getApps();
+    const apps=data.apps||[];
+    // Render rows
+    el('appsList').innerHTML=apps.length?apps.map(rowHTML).join(''):emptyHTML();
+    lucide.createIcons();
+    // Stat cards
+    const n=apps.length;
+    el('statTotal').textContent=n;
+    el('barTotal').style.width=Math.min(n*10,100)+'%';
+    el('panelCount').textContent=`${n} ${n===1?'nástroj':n<5?'nástroje':'nástrojů'}`;
+    if(apps.length>0){
+      const last=apps.sort((a,b)=>new Date(b.updated)-new Date(a.updated))[0];
+      el('statLast').textContent=fmtDate(last.updated);
+      el('statLastName').textContent=last.name;
+    }
+  }catch(e){
+    el('statTotal').textContent='!';
+    toast('Chyba: '+e.message,'err');
+  }
+}
+
+// ─ UPLOAD ─
+let up={};
+function openUpload(){up={};renderDrop();el('uOverlay').classList.add('open');}
+function closeUpload(){el('uOverlay').classList.remove('open');}
+
+function renderDrop(){
+  el('uBody').innerHTML=`<div class="dz" id="dz" onclick="el('fi').click()">
+    <i data-lucide="upload-cloud" style="width:30px;height:30px;stroke-width:1.4;color:#aaa"></i>
+    <h4>Přetáhni HTML soubor sem</h4>
+    <p>nebo klikni pro výběr ze zařízení</p>
+    <input type="file" id="fi" accept=".html,.htm" style="display:none" onchange="onFile(this.files[0])">
+  </div>`;
+  el('uFoot').innerHTML=`<button class="btn btn-ghost" onclick="closeUpload()">Zrušit</button>`;
+  lucide.createIcons();
+  const dz=el('dz');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');onFile(e.dataTransfer.files[0]);});
+}
+
+async function onFile(file){
+  if(!file||!/\.(html|htm)$/i.test(file.name)){toast('Vyber HTML soubor','err');return;}
+  up.file=file;
+  el('uBody').innerHTML=`<div class="sc"><div class="spin"></div><h4>Claude analyzuje aplikaci…</h4><p>Generuji název, popis a ikonu</p></div>`;
+  el('uFoot').innerHTML='';
+  const content=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsText(file,'UTF-8');});
+  up.content=content;
+  try{up.meta=await analyzeApp(content,file.name);}
+  catch(e){up.meta={name:'',description:'',icon:'box',colorIndex:0};toast('Claude API selhalo — vyplň ručně','err');}
+  renderForm(file.name,up.meta);
+}
+
+function renderForm(fn,meta){
+  const p=PAL[meta.colorIndex%PAL.length];
+  el('uBody').innerHTML=`
+  <div class="fg"><label class="fl">Soubor</label>
+    <div style="font-size:12px;color:#888;padding:2px 0;font-family:'DM Mono',monospace">${esc(fn)}</div>
+  </div>
+  <div class="fg"><label class="fl">Ikona (Claude)</label>
+    <div class="iprev">
+      <div class="iprev-box" style="background:${p.bg}">
+        <i data-lucide="${meta.icon}" style="width:16px;height:16px;color:${p.fg};stroke-width:2"></i>
+      </div>
+      <div>
+        <div class="iprev-n">${meta.icon}</div>
+        <div class="iprev-s">barevné schéma ${meta.colorIndex}</div>
+      </div>
+    </div>
+  </div>
+  <div class="fg"><label class="fl">Název aplikace</label>
+    <input type="text" id="eName" value="${esc(meta.name)}" maxlength="60">
+  </div>
+  <div class="fg"><label class="fl">Popis</label>
+    <textarea id="eDesc" maxlength="130" style="min-height:56px">${esc(meta.description)}</textarea>
+  </div>
+  <div class="fg"><label class="fl">Název souboru v repozitáři</label>
+    <input type="text" id="eSlug" value="${esc(fn)}" style="font-family:'DM Mono',monospace;font-size:12px">
+  </div>`;
+  el('uFoot').innerHTML=`
+  <button class="btn btn-ghost" onclick="closeUpload()">Zrušit</button>
+  <button class="btn btn-blk" onclick="doUpload()">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    Nahrát na GitHub
+  </button>`;
+  lucide.createIcons();
+}
+
+async function doUpload(){
+  const name=el('eName').value.trim(),desc=el('eDesc').value.trim(),slug=el('eSlug').value.trim();
+  if(!name||!desc||!slug){toast('Vyplň všechna pole','err');return;}
+  el('uBody').innerHTML=`<div class="sc"><div class="spin"></div><h4>Nahrávám na GitHub…</h4><p>Prosím čekej</p></div>`;
+  el('uFoot').innerHTML='';
+  try{
+    await putFile(slug,up.content,`Přidána aplikace: ${name}`);
+    const{data,sha}=await getApps();
+    const apps=data.apps||[];
+    const id=apps.length>0?Math.max(...apps.map(a=>a.id))+1:1;
+    apps.push({id,name,description:desc,icon:up.meta?.icon||'box',
+      colorIndex:up.meta?.colorIndex??(id-1)%PAL.length,
+      filename:slug,url:`${BASE_URL}/${slug}`,
+      updated:new Date().toISOString().split('T')[0]});
+    await putApps({apps},sha,`apps.json: přidána ${name}`);
+    closeUpload();toast(`„${name}" nahrána!`,'ok');await doRefresh();
+  }catch(e){
+    toast('Chyba: '+e.message,'err');
+    renderForm(up.file.name,up.meta||{name:'',description:'',icon:'box',colorIndex:0});
+  }
+}
+
+// ─ SETTINGS ─
+function openSettings(){el('sOverlay').classList.add('open');}
+function closeSettings(){el('sOverlay').classList.remove('open');}
+
+// ─ TOAST ─
+let _tt;
+function toast(msg,type=''){
+  const t=el('toast');t.textContent=msg;
+  t.className='toast show'+(type?' '+type:'');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function showApp(){
+  ['loginScreen','setupScreen'].forEach(id=>{const e=el(id);e.classList.remove('active');e.style.display='none';});
+  el('appScreen').style.display='flex';el('appScreen').classList.add('active');
+  doRefresh();
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeUpload();closeSettings();}});
+
+// ─ INIT ─
+(async()=>{
+  if(!ls('app_password')){
+    el('loginScreen').style.display='none';el('loginScreen').classList.remove('active');
+    el('setupScreen').style.display='flex';el('setupScreen').classList.add('active');return;
+  }
+  const s=ls('session');
+  if(s&&Date.now()-parseInt(s)<86400000){
+    el('loginScreen').style.display='none';el('loginScreen').classList.remove('active');
+    showApp();return;
+  }
+  localStorage.removeItem('session');
+})();
+</script>
+</body>
+</html>
