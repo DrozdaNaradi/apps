@@ -1,0 +1,14 @@
+{
+  "apps": [
+    {
+      "id": 1,
+      "name": "DPH Kalkulačka",
+      "description": "Jednoducha kalkulačka pro výpočet DPH s různými sazbami, funkcí slev a historií výpočtů",
+      "icon": "calculator",
+      "colorIndex": 3,
+      "filename": "dph-kalkulacka.html",
+      "url": "https://drozdanaradi.github.io/apps/dph-kalkulacka.html",
+      "updated": "2026-03-30"
+    }
+  ]
+}
