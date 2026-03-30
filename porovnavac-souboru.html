@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Porovnávač souborů</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f7f6f2;
+    --surface: #ffffff;
+    --border: #e2e0d8;
+    --text: #1a1a18;
+    --muted: #6b6a65;
+    --accent: #1a5cad;
+    --accent-light: #e8f0fb;
+    --danger: #c0392b;
+    --danger-light: #fdf0ef;
+    --success: #1a7a4a;
+    --success-light: #eaf6f0;
+    --warning: #b8670a;
+    --warning-light: #fef6e8;
+    --radius: 10px;
+    --font: 'Georgia', 'Times New Roman', serif;
+    --sans: -apple-system, 'Segoe UI', sans-serif;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+  
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1rem; }
+  header .logo { font-size: 1.5rem; font-weight: bold; letter-spacing: -0.5px; color: var(--text); }
+  header .logo span { color: var(--accent); }
+  header p { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+  .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  @media (max-width: 680px) { .upload-grid { grid-template-columns: 1fr; } }
+
+  .upload-card {
+    background: var(--surface);
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+  .upload-card:hover, .upload-card.drag { border-color: var(--accent); background: var(--accent-light); }
+  .upload-card.loaded { border-style: solid; border-color: var(--success); background: var(--success-light); }
+  .upload-card input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-card .icon { font-size: 2rem; margin-bottom: 0.75rem; }
+  .upload-card h3 { font-family: var(--sans); font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .upload-card p { font-family: var(--sans); font-size: 12px; color: var(--muted); }
+  .upload-card .file-info { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--success); margin-top: 8px; }
+
+  .config-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end;
+    margin-bottom: 1.5rem;
+  }
+  .config-group { display: flex; flex-direction: column; gap: 4px; min-width: 160px; flex: 1; }
+  .config-group label { font-family: var(--sans); font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .config-group select, .config-group input {
+    font-family: var(--sans); font-size: 14px;
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 10px; background: var(--bg); color: var(--text);
+    outline: none;
+  }
+  .config-group select:focus, .config-group input:focus { border-color: var(--accent); }
+
+  .btn {
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    padding: 10px 24px; border-radius: 6px; cursor: pointer;
+    border: none; transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: var(--bg); }
+
+  .stats-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; flex: 1; min-width: 120px; }
+  .stat-card .num { font-size: 1.75rem; font-weight: bold; }
+  .stat-card .lbl { font-family: var(--sans); font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat-card.red .num { color: var(--danger); }
+  .stat-card.green .num { color: var(--success); }
+  .stat-card.amber .num { color: var(--warning); }
+
+  .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+  .filter-btn { font-family: var(--sans); font-size: 12px; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; cursor: pointer; transition: all 0.15s; }
+  .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .filter-bar input { font-family: var(--sans); font-size: 13px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 20px; outline: none; flex: 1; max-width: 280px; }
+  .filter-bar input:focus { border-color: var(--accent); }
+
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: 13px; }
+  thead th { text-align: left; padding: 10px 14px; background: var(--bg); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; color: var(--muted); position: sticky; top: 0; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:hover { background: #f9f8f5; }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 9px 14px; white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+  
+  .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.3px; }
+  .badge-red { background: var(--danger-light); color: var(--danger); }
+  .badge-green { background: var(--success-light); color: var(--success); }
+  .badge-amber { background: var(--warning-light); color: var(--warning); }
+
+  .diff-val { color: var(--danger); text-decoration: line-through; margin-right: 4px; }
+  .new-val { color: var(--success); }
+
+  #empty-state { text-align: center; padding: 4rem 2rem; font-family: var(--sans); }
+  #empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+  #empty-state p { color: var(--muted); font-size: 14px; }
+
+  .export-bar { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Porovná<span>vač</span></div>
+    <p>Porovnejte dva soubory (Excel / CSV) podle klíčového sloupce</p>
+  </div>
+</header>
+
+<main>
+  <div class="upload-grid">
+    <div class="upload-card" id="drop1">
+      <input type="file" id="file1" accept=".xlsx,.xls,.csv">
+      <div class="icon">📋</div>
+      <h3>Soubor A — Ceník / zdroj</h3>
+      <p>Excel (.xlsx, .xls) nebo CSV</p>
+      <div class="file-info" id="info1" style="display:none"></div>
+    </div>
+    <div class="upload-card" id="drop2">
+      <input type="file" id="file2" accept=".xlsx,.xls,.csv">
+      <div class="icon">🛒</div>
+      <h3>Soubor B — Eshop / export</h3>
+      <p>Excel (.xlsx, .xls) nebo CSV</p>
+      <div class="file-info" id="info2" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="config-bar">
+    <div class="config-group">
+      <label>Klíčový sloupec (A)</label>
+      <select id="keyA"><option>— nahrajte soubor —</option></select>
+    </div>
+    <div class="config-group">
+      <label>Klíčový sloupec (B)</label>
+      <select id="keyB"><option>— nahrajte soubor —</option></select>
+    </div>
+    <div class="config-group" style="max-width:180px">
+      <label>Sloupce k porovnání</label>
+      <input type="text" id="compareCols" placeholder="cena, název, sklad..." title="Oddělte čárkou. Prázdné = vše.">
+    </div>
+    <button class="btn btn-primary" id="compareBtn" disabled onclick="runCompare()">Porovnat</button>
+  </div>
+
+  <div id="results" style="display:none">
+    <div class="stats-row" id="statsRow"></div>
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterView('all',this)">Vše</button>
+      <button class="filter-btn" onclick="filterView('diff',this)">Rozdíly</button>
+      <button class="filter-btn" onclick="filterView('only_a',this)">Jen v A</button>
+      <button class="filter-btn" onclick="filterView('only_b',this)">Jen v B</button>
+      <button class="filter-btn" onclick="filterView('match',this)">Shody</button>
+      <input type="text" id="searchBox" placeholder="Hledat artikl / hodnotu…" oninput="renderTable()">
+    </div>
+    <div class="table-wrap" style="max-height:60vh">
+      <table id="diffTable">
+        <thead id="tHead"></thead>
+        <tbody id="tBody"></tbody>
+      </table>
+    </div>
+    <div class="export-bar">
+      <button class="btn btn-outline" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+  </div>
+
+  <div id="empty-state">
+    <div class="icon">📂</div>
+    <p>Nahrajte oba soubory, vyberte klíčový sloupec a klikněte <strong>Porovnat</strong></p>
+  </div>
+</main>
+
+<script>
+let dataA = [], dataB = [], allRows = [], currentFilter = 'all';
+
+function readFile(file, cb) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, { type: 'binary' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    cb(rows);
+  };
+  reader.readAsBinaryString(file);
+}
+
+function fillSelect(sel, cols) {
+  sel.innerHTML = '';
+  cols.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+}
+
+function tryAutoSelect(sel, hint) {
+  const hints = ['artikl','sku','code','id','article','item','číslo','number','produkt'];
+  const all = [...sel.options].map(o => o.value.toLowerCase());
+  const found = hints.concat(hint ? [hint.toLowerCase()] : []).find(h => all.some(v => v.includes(h)));
+  if (found) {
+    const idx = all.findIndex(v => v.includes(found));
+    if (idx >= 0) sel.selectedIndex = idx;
+  }
+}
+
+document.getElementById('file1').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  readFile(f, rows => {
+    dataA = rows;
+    const cols = Object.keys(rows[0] || {});
+    fillSelect(document.getElementById('keyA'), cols);
+    tryAutoSelect(document.getElementById('keyA'), '');
+    document.getElementById('info1').style.display = 'block';
+    document.getElementById('info1').textContent = `✓ ${f.name} — ${rows.length} řádků`;
+    document.getElementById('drop1').classList.add('loaded');
+    checkReady();
+  });
+});
+
+document.getElementById('file2').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  readFile(f, rows => {
+    dataB = rows;
+    const cols = Object.keys(rows[0] || {});
+    fillSelect(document.getElementById('keyB'), cols);
+    tryAutoSelect(document.getElementById('keyB'), '');
+    document.getElementById('info2').style.display = 'block';
+    document.getElementById('info2').textContent = `✓ ${f.name} — ${rows.length} řádků`;
+    document.getElementById('drop2').classList.add('loaded');
+    checkReady();
+  });
+});
+
+function checkReady() {
+  document.getElementById('compareBtn').disabled = !(dataA.length && dataB.length);
+}
+
+function runCompare() {
+  const kA = document.getElementById('keyA').value;
+  const kB = document.getElementById('keyB').value;
+  const colsInput = document.getElementById('compareCols').value.trim();
+
+  const colsA = Object.keys(dataA[0] || {});
+  const colsB = Object.keys(dataB[0] || {});
+
+  let compareCols;
+  if (colsInput) {
+    compareCols = colsInput.split(',').map(c => c.trim()).filter(Boolean);
+  } else {
+    compareCols = colsA.filter(c => c !== kA && colsB.includes(c));
+  }
+
+  const mapB = {};
+  dataB.forEach(r => { mapB[String(r[kB] || '').trim()] = r; });
+  const mapA = {};
+  dataA.forEach(r => { mapA[String(r[kA] || '').trim()] = r; });
+
+  const rows = [];
+
+  dataA.forEach(rowA => {
+    const key = String(rowA[kA] || '').trim();
+    const rowB = mapB[key];
+    if (!rowB) {
+      rows.push({ _key: key, _type: 'only_a', _diffs: {}, _rowA: rowA, _rowB: null });
+    } else {
+      const diffs = {};
+      compareCols.forEach(col => {
+        const va = String(rowA[col] ?? '').trim();
+        const vb = String(rowB[col] ?? '').trim();
+        if (va !== vb) diffs[col] = { a: va, b: vb };
+      });
+      rows.push({ _key: key, _type: Object.keys(diffs).length ? 'diff' : 'match', _diffs: diffs, _rowA: rowA, _rowB: rowB });
+    }
+  });
+
+  dataB.forEach(rowB => {
+    const key = String(rowB[kB] || '').trim();
+    if (!mapA[key]) {
+      rows.push({ _key: key, _type: 'only_b', _diffs: {}, _rowA: null, _rowB: rowB });
+    }
+  });
+
+  allRows = rows;
+  window._compareCols = compareCols;
+  window._kA = kA;
+
+  // stats
+  const cnt = t => rows.filter(r => r._type === t).length;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="num">${rows.length}</div><div class="lbl">Celkem artiklů</div></div>
+    <div class="stat-card amber"><div class="num">${cnt('diff')}</div><div class="lbl">Rozdíly v hodnotách</div></div>
+    <div class="stat-card red"><div class="num">${cnt('only_a')}</div><div class="lbl">Jen v souboru A</div></div>
+    <div class="stat-card red"><div class="num">${cnt('only_b')}</div><div class="lbl">Jen v souboru B</div></div>
+    <div class="stat-card green"><div class="num">${cnt('match')}</div><div class="lbl">Shody</div></div>
+  `;
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('empty-state').style.display = 'none';
+
+  currentFilter = 'all';
+  document.querySelectorAll('.filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  renderTable();
+}
+
+function filterView(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  const cols = window._compareCols || [];
+  const kA = window._kA || 'id';
+
+  let rows = allRows;
+  if (currentFilter !== 'all') rows = rows.filter(r => r._type === currentFilter);
+  if (search) rows = rows.filter(r => r._key.toLowerCase().includes(search) ||
+    cols.some(c => String(r._rowA?.[c]||'').toLowerCase().includes(search) || String(r._rowB?.[c]||'').toLowerCase().includes(search)));
+
+  // build header
+  const thead = document.getElementById('tHead');
+  thead.innerHTML = `<tr>
+    <th>Stav</th>
+    <th>${kA}</th>
+    ${cols.map(c => `<th>${c}</th>`).join('')}
+  </tr>`;
+
+  // build body
+  const tbody = document.getElementById('tBody');
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="${cols.length+2}" style="text-align:center;padding:2rem;color:var(--muted)">Žádné záznamy</td></tr>`; return; }
+
+  tbody.innerHTML = rows.map(r => {
+    const badgeMap = { diff: 'badge-amber', only_a: 'badge-red', only_b: 'badge-red', match: 'badge-green' };
+    const labelMap = { diff: 'ROZDÍL', only_a: 'JEN A', only_b: 'JEN B', match: 'SHODA' };
+    const badge = `<span class="badge ${badgeMap[r._type]}">${labelMap[r._type]}</span>`;
+
+    const cells = cols.map(c => {
+      if (r._diffs[c]) {
+        return `<td><span class="diff-val">${esc(r._diffs[c].a)}</span><span class="new-val">${esc(r._diffs[c].b)}</span></td>`;
+      }
+      const val = r._rowA?.[c] ?? r._rowB?.[c] ?? '';
+      return `<td>${esc(String(val))}</td>`;
+    }).join('');
+
+    return `<tr>${`<td>${badge}</td>`}<td><strong>${esc(r._key)}</strong></td>${cells}</tr>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function exportCSV() {
+  const cols = window._compareCols || [];
+  const kA = window._kA || 'id';
+  const rows = currentFilter === 'all' ? allRows : allRows.filter(r => r._type === currentFilter);
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  const filtered = search ? rows.filter(r => r._key.toLowerCase().includes(search)) : rows;
+
+  const labelMap = { diff: 'ROZDÍL', only_a: 'JEN A', only_b: 'JEN B', match: 'SHODA' };
+  const header = ['Stav', kA, ...cols.flatMap(c => [c+'_A', c+'_B'])];
+  const lines = [header.join(';')];
+  filtered.forEach(r => {
+    const vals = cols.flatMap(c => [r._rowA?.[c]??'', r._rowB?.[c]??'']);
+    lines.push([labelMap[r._type], r._key, ...vals].map(v => `"${String(v).replace(/"/g,'""')}"`).join(';'));
+  });
+
+  const blob = new Blob(['\uFEFF'+lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'porovnani.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
