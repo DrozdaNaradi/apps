@@ -39,6 +39,16 @@
       "filename": "zasob-analytika_3.html",
       "url": "https://drozdanaradi.github.io/apps/zasob-analytika_3.html",
       "updated": "2026-03-30"
+    },
+    {
+      "id": 5,
+      "name": "Porovnávač souborů",
+      "description": "Porovnává dva soubory Excel/CSV podle klíčového sloupce a zobrazuje rozdíly, shody a chybějící artikly",
+      "icon": "table",
+      "colorIndex": 2,
+      "filename": "porovnavac-souboru.html",
+      "url": "https://drozdanaradi.github.io/apps/porovnavac-souboru.html",
+      "updated": "2026-03-30"
     }
   ]
 }
